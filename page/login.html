@@ -1,0 +1,62 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UKM - Esport</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <style>
+        .custom-bg-left {
+            background-color: #727DB6;
+        }
+        .custom-bg-right {
+            background-color: #F0F4FF;
+        }
+        .custom-input {
+            background-color: #E0E7FF;
+        }
+    </style>
+</head>
+<body>
+
+    <section class="h-screen flex flex-col md:flex-row" style="font-family: 'Poppins';">
+
+        <!-- Left -->
+        <div class="flex flex-col justify-center items-center w-full md:w-1/2 custom-bg-left p-8 text-slate-200">
+            <img src="../src/logo.png" alt="Colorful logo with overlapping shapes" class="w-72 h-72 mb-3">
+            <h1 class="text-3xl font-bold mb-4">Selamat Datang!</h1>
+            <p class="text-lg mb-6 text-justify">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+            <button class="border-2 border-white rounded px-3 py-1 hover:bg-white hover:text-[#727DB6] transition duration-300"><a href="register.html">REGISTER</a></button>
+        </div>
+
+        <!-- Right -->
+        <div class="flex flex-col justify-center items-center w-full md:w-1/2 custom-bg-right p-8">
+            <h2 class="text-2xl font-bold mb-6" style="color: #727DB6;">LOGIN</h2>
+            <input type="text" placeholder="NIM" class="custom-input border-none mb-4 p-3 rounded w-full">
+            <div class="relative w-full mb-4">
+                <input type="password" id="password" placeholder="PASSWORD" class="custom-input border-none p-3 rounded w-full">
+                <span class="absolute right-3 inset-y-0 flex items-center text-gray-500 cursor-pointer" id="togglePassword">
+                    <i class="fas fa-eye-slash"></i>
+                </span>
+            </div>
+            
+            <small class="text-gray-600 font-semibold text-base mb-6">Lupa Password ?</small>
+            <button class=" text-white px-3 py-1 rounded" style="background-color: #727DB6;">Masuk</button>
+        </div>
+    </section>
+
+    <script>
+        $(document).ready(function() {
+            $('#togglePassword').click(function() {
+                const passwordInput = $('#password');
+                const icon = $(this).find('i');
+                const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
+                passwordInput.attr('type', type);
+                icon.toggleClass('fa-eye fa-eye-slash');
+            });
+        });
+    </script>
+</body>
+</html>
