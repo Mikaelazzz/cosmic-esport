@@ -636,7 +636,7 @@ $(document).ready(function() {
         $('#avatarInput').val('');
 
         $.ajax({
-            url: 'remove_avatar.php',
+            url: '../api/remove_avatar.php',
             method: 'POST',
             data: { remove_avatar: true },
             success: function(response) {
