@@ -22,7 +22,7 @@ $user = $_SESSION['user'];
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <style>
         .carousel {
             position: relative;
@@ -117,13 +117,13 @@ $user = $_SESSION['user'];
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="flex items-center p-2 hover:bg-slate-600 rounded">
+                            <a href="../page/kegiatan.php" class="flex items-center p-2 hover:bg-slate-600 rounded">
                                 <i class="fa-solid fa-clipboard-list mr-2"></i>
                                 Daftar Kegiatan
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="flex items-center p-2 hover:bg-slate-600 rounded">
+                            <a href="../page/anggota.php" class="flex items-center p-2 hover:bg-slate-600 rounded">
                                 <i class="fa-solid fa-users mr-2"></i>
                                 Anggota UKM
                             </a>
@@ -217,7 +217,7 @@ $user = $_SESSION['user'];
         <div class="flex flex-col items-end">
             <p class="text-sm text-gray-500">Jumlah Absen 0/12</p>
             <div class="mt-2 flex space-x-2 rounded-full" style="background-color: #727DB6;">
-                <button class="px-3 py-1 text-white rounded-full text-sm hover:bg-[#606a9a] transition" >Scan</button>
+                <button id="scanButton" class="px-3 py-1 text-white rounded-full text-sm hover:bg-[#606a9a] transition" >Scan</button>
             </div>
         </div>
     </div>
@@ -355,6 +355,113 @@ $user = $_SESSION['user'];
             if (touchEndX - touchStartX > swipeThreshold) {
                 // Swipe right - previous slide
                 prevSlide();
+            }
+        }
+
+        // Fungsi untuk QR Scanner (Diperbarui)
+        let html5QrcodeScanner;
+
+        async function checkCameraPermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop()); // Hentikan akses setelah cek
+                return true;
+            } catch (error) {
+                alert("Akses kamera ditolak atau tidak tersedia. Mohon izinkan akses kamera di pengaturan browser Anda.");
+                console.error("Error checking camera permission:", error);
+                return false;
+            }
+        }
+
+        scanButton.addEventListener('click', async () => {
+            if (!html5QrcodeScanner) {
+                try {
+                    // Periksa izin kamera
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    stream.getTracks().forEach(track => track.stop());
+
+                    // Buat elemen video untuk menampilkan kamera
+                    const videoElement = document.createElement('video');
+                    videoElement.id = 'video';
+                    videoElement.style = 'width: 100%; max-width: 500px; border-radius:15px;';
+
+                    // Buat div untuk menampilkan scanner
+                    const qrReaderDiv = document.createElement('div');
+                    qrReaderDiv.id = 'qr-reader';
+                    qrReaderDiv.className = 'fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50';
+                    qrReaderDiv.innerHTML = `
+                    <div class="bg-[#727DB6] p-4 rounded-lg shadow-lg w-full max-w-md h-[55vh] flex flex-col justify-between"> <!-- Menyesuaikan tinggi dengan 90% viewport -->
+                        <div class="flex justify-between items-center mb-2">
+                            <h2 class="text-lg text-slate-200 font-semibold">Absen</h2>
+                            <button id="closeScanner" class="px-3 py-1 bg-red-500 text-slate-200 text-center rounded-full hover:bg-red-600 transition">
+                                Tutup
+                            </button>
+                        </div>
+                        <div id="reader" class="w-full flex-1 bg-black rounded"></div>
+                    </div>
+                    `;
+                    document.body.appendChild(qrReaderDiv);
+
+                    // Tambahkan video ke div reader
+                    document.getElementById('reader').appendChild(videoElement);
+
+                    // Inisialisasi ZXing
+                    const codeReader = new ZXing.BrowserMultiFormatReader();
+                    codeReader.decodeFromVideoDevice(null, 'video', (result, error) => {
+                        if (result) {
+                            // Ketika QR berhasil discan
+                            recordAttendance(result.text);
+                            codeReader.reset();
+                            document.getElementById('qr-reader').remove();
+                            alert(`Absensi berhasil dengan kode: ${result.text}`);
+                        }
+                        if (error && !(error instanceof ZXing.NotFoundException)) {
+                            console.error("Error scanning QR:", error);
+                        }
+                    });
+
+                    // Tambahkan tombol untuk menutup scanner
+                    document.getElementById('closeScanner').addEventListener('click', () => {
+                        codeReader.reset();
+                        document.getElementById('qr-reader').remove();
+                    });
+                } catch (error) {
+                    alert("Akses kamera ditolak atau tidak tersedia. Mohon izinkan akses kamera di pengaturan browser Anda.");
+                    console.error("Error accessing camera:", error);
+                }
+            }
+        });
+
+        // Fungsi untuk merekam absensi ke server
+        function recordAttendance(qrCode) {
+            const userId = <?php echo json_encode($_SESSION['user']['id'] ?? ''); ?>; // Ambil ID pengguna dari session
+            const meetingId = 1; // Ganti dengan ID pertemuan yang sesuai
+
+            $.ajax({
+                url: '../api/record_attendance.php', // File PHP untuk menyimpan absensi
+                method: 'POST',
+                data: {
+                    user_id: userId,
+                    meeting_id: meetingId,
+                    qr_code: qrCode
+                },
+                success: function(response) {
+                    console.log("Absensi berhasil disimpan:", response);
+                    // Perbarui jumlah absen di UI jika diperlukan
+                    updateAttendanceCount(response.attendance_count);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Gagal menyimpan absensi:", error);
+                    alert("Gagal merekam absensi. Coba lagi.");
+                }
+            });
+        }
+
+        // Fungsi untuk memperbarui jumlah absen di UI
+        function updateAttendanceCount(count) {
+            const attendanceElement = document.querySelector('.text-sm.text-gray-500');
+            if (attendanceElement) {
+                attendanceElement.textContent = `Jumlah Absen ${count}/12`;
             }
         }
     </script>
