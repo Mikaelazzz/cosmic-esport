@@ -76,19 +76,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama_lengkap = SQLite3::escapeString($nama_lengkap);
     $nim = SQLite3::escapeString($nim);
 
-    // Handle file upload
-    $new_image_path = $user['profile_image']; // Default to existing image
-    if ($profile_image && $profile_image['error'] === UPLOAD_ERR_OK) {
-        $target_dir = "uploads/profile_images/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
+// Handle file upload
+$new_image_path = $user['profile_image']; // Default to existing image
+if ($profile_image && $profile_image['error'] === UPLOAD_ERR_OK) {
+    $target_dir = "../img/profile/";
+    if (!file_exists($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
+
+    // Get NIM from the form
+    $nim = $_POST['nim'];
+
+    // Find all files with the same NIM prefix
+    $files = glob($target_dir . $nim . '-*.*'); // Get all files matching [NIM]-*
+
+    // Find the highest number used for this NIM
+    $file_count = 1; // Start from 1 if no files exist
+    if (!empty($files)) {
+        // Extract numbers from filenames
+        $numbers = [];
+        foreach ($files as $file) {
+            // Extract the number from the filename (e.g., "123456789-2.jpg" -> 2)
+            if (preg_match('/' . preg_quote($nim, '/') . '-(\d+)\./', $file, $matches)) {
+                $numbers[] = (int)$matches[1];
+            }
         }
-        $new_image_path = $target_dir . basename($profile_image['name']);
-        if (!move_uploaded_file($profile_image['tmp_name'], $new_image_path)) {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to upload image.']);
-            exit();
+        // Find the highest number and increment by 1
+        if (!empty($numbers)) {
+            $file_count = max($numbers) + 1;
         }
     }
+
+    // Generate the new file name
+    $file_extension = pathinfo($profile_image['name'], PATHINFO_EXTENSION);
+    $new_image_path = $target_dir . $nim . '-' . $file_count . '.' . $file_extension;
+
+    // Move the uploaded file to the new location
+    if (!move_uploaded_file($profile_image['tmp_name'], $new_image_path)) {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to upload image.']);
+        exit();
+    }
+}
 
     // Update database
     $stmt = $db->prepare('UPDATE users SET nama_lengkap = :nama_lengkap, nim = :nim, profile_image = :profile_image WHERE id = :id');
@@ -253,7 +281,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     </style>
 </head>
 <body style="background-color: #F0F4FF; font-family: 'Poppins';">
-    <div class="text-white p-5 text-left text-2xl font-bold" style="background-color: #727DB6;">Profile</div>
+    
+    <header class="bg-[#727DB6] text-white p-4 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <span class="text-xl">Profile</span>
+        </div>
+        <a href="javascript:void(0)" id="closeButton" class="text-white p-3 border-2 rounded-full hover:bg-[#5c6491] border-white w-10 h-10 flex items-center justify-center flex-col space-y-0">
+            <span class="text-lg">×</span>
+        </a>
+    </header>
+
+
     <div class="container mx-auto mt-4 p-4">
         <!-- Use flex or grid with responsive ordering -->
         <div class="flex flex-col md:grid md:grid-cols-2 gap-4" style="color:#646565">
@@ -371,6 +409,15 @@ $(document).ready(function() {
     $('#cancelPopup').hide();
     $('#errorPopup').hide();
 
+    // Close Button History
+    // Get the close button (now an <a> element with id="closeButton")
+    const closeButton = document.getElementById('closeButton');
+
+    // Add click event listener to navigate back to the previous page
+    closeButton.addEventListener('click', function() {
+        window.history.back(); // This navigates to the previous page in the browser history
+    });
+
     // Simpan nilai default ke dalam variabel JavaScript
     const defaultData = {
     nama_lengkap: "<?php echo htmlspecialchars($user['nama_lengkap']); ?>",
@@ -408,7 +455,7 @@ $(document).ready(function() {
     // Handle Cancel Popup actions
     $('#discardData').click(function() {
         resetToDefault()
-        window.location.href = '../page/home.php';
+        window.location.href = '../page/index.php';
         $('#passwordFields').addClass('hidden');
         $('#passwordButtons').addClass('hidden');
         $('#togglePasswordChange').text('Change Password');
@@ -453,7 +500,7 @@ $(document).ready(function() {
                     if (data.status === 'success') {
                         $('#successPopup').fadeIn(500).addClass('animate-fade-in');
                         setTimeout(function() {
-                            window.location.href = '../page/home.php'; // Redirect on success
+                            window.location.href = '../page/index.php'; // Redirect on success
                         }, 2000);
                     } else {
                         showErrorPopup(data.message); // Show error message from server
@@ -590,7 +637,7 @@ $(document).ready(function() {
     $('#closePasswordPopup').click(function() {
         $('#passwordPopup').fadeOut(500, function() {
             $(this).removeClass('animate-fade-in');
-            window.location.href = '../page/home.php';
+            window.location.href = '../page/index.php';
         });
     });
 
