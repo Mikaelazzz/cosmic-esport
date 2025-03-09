@@ -15,15 +15,17 @@ if (!isset($_SESSION['pertemuan_id'])) {
 
 $data = json_decode(file_get_contents('php://input'), true);
 $jamAkhir = $data['jamAkhir'];
+$status = $data['status'];
 $pertemuan_id = $_SESSION['pertemuan_id']; // Ambil pertemuan_id dari session
 
 // Koneksi ke database SQLite3
 $db = new SQLite3('../db/ukm.db');
 
 // Query untuk update jam akhir
-$query = "UPDATE jadwal_pertemuan SET jam_akhir = :jamAkhir WHERE id = :id";
+$query = "UPDATE jadwal_pertemuan SET jam_akhir = :jamAkhir, status = :status WHERE id = :id";
 $stmt = $db->prepare($query);
 $stmt->bindValue(':jamAkhir', $jamAkhir, SQLITE3_TEXT);
+$stmt->bindValue(':status', $status, SQLITE3_TEXT);
 $stmt->bindValue(':id', $pertemuan_id, SQLITE3_INTEGER);
 
 // Eksekusi query
