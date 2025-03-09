@@ -77,6 +77,14 @@ $queryAnggota = "
 $stmtAnggota = $db->prepare($queryAnggota);
 $stmtAnggota->bindValue(':pertemuan_id', $id_pertemuan, SQLITE3_INTEGER);
 $resultAnggota = $stmtAnggota->execute();
+
+// Query untuk mengambil status sesi
+$queryStatus = "SELECT status FROM jadwal_pertemuan WHERE id = :id";
+$stmtStatus = $db->prepare($queryStatus);
+$stmtStatus->bindValue(':id', $id_pertemuan, SQLITE3_INTEGER);
+$resultStatus = $stmtStatus->execute();
+$statusSesi = $resultStatus->fetchArray(SQLITE3_ASSOC)['status'];
+
 ?>
 
 <!DOCTYPE html>
@@ -93,13 +101,6 @@ $resultAnggota = $stmtAnggota->execute();
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
-    <style>
-        .blur-effect {
-            filter: blur(6px); /* Efek blur */
-            pointer-events: none; /* Nonaktifkan interaksi */
-            user-select: none; /* Nonaktifkan seleksi teks */
-        }
-    </style>
 </head>
 <body style="font-family: 'Poppins';">
 <section class="bg-gray-100 font-poppins h-screen flex flex-col">
@@ -108,7 +109,7 @@ $resultAnggota = $stmtAnggota->execute();
         <div class="flex items-center space-x-2">
             <span class="text-xl">Detail Pertemuan</span>
         </div>
-        <a href="pertemuan.php" class="text-white p-3 border-2 rounded-full hover:bg-[#5c6491] border-white w-10 h-10 flex items-center justify-center flex-col space-y-0">
+        <a href="index.php" class="text-white p-3 border-2 rounded-full hover:bg-[#5c6491] border-white w-10 h-10 flex items-center justify-center flex-col space-y-0">
             <span class="text-lg">×</span>
         </a>
     </header>
@@ -142,10 +143,7 @@ $resultAnggota = $stmtAnggota->execute();
             </div>
 
 <!-- Daftar Anggota -->
-<div class="mb-6 blur-effect relative" id="daftarAnggota">
-    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60">
-    </div>
-
+<div class="mb-6">
     <h3 class="text-xl font-bold mb-4">List Anggota</h3>
     <div class="overflow-x-auto ">
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
@@ -197,6 +195,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const mulaiSesi = document.getElementById('mulaiSesi');
         const akhiriSesi = document.getElementById('akhiriSesi');
         const presensiQR = document.getElementById('presensiQR');
+        const statusSesi = "<?php echo $statusSesi; ?>"; // Ambil status sesi dari PHP
+
+        // Periksa status sesi saat halaman dimuat
+        if (statusSesi === 'berlangsung') {
+            // Sembunyikan tombol Mulai Sesi dan tampilkan tombol Akhiri Sesi
+            mulaiSesi.classList.add('hidden');
+            akhiriSesi.classList.remove('hidden');
+            presensiQR.classList.remove('hidden');
+        } else {
+            // Tampilkan tombol Mulai Sesi dan sembunyikan tombol Akhiri Sesi
+            mulaiSesi.classList.remove('hidden');
+            akhiriSesi.classList.add('hidden');
+            presensiQR.classList.add('hidden');
+        }
 
         mulaiSesi.addEventListener('click', () => {
         const jamMulai = new Date().toLocaleTimeString();
@@ -212,19 +224,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ jamMulai })
+                body: JSON.stringify({ 
+                    jamMulai,
+                    status: 'berlangsung'
+                })
             }).then(response => response.json())
               .then(data => {
                   if (data.success) {
-                      // Tampilkan tombol Akhiri Sesi dan Presensi QR
-                      akhiriSesi.classList.remove('hidden');
-                      presensiQR.classList.remove('hidden');
-                      mulaiSesi.classList.add('hidden'); // Sembunyikan tombol Mulai Sesi
-
-                      // Hapus efek blur dan pesan "Sesi Belum Dimulai"
-                      const daftarAnggota = document.getElementById('daftarAnggota');
-                      daftarAnggota.classList.remove('blur-effect');
-                      daftarAnggota.querySelector('.absolute').remove(); // Hapus overlay
+                        // Tampilkan tombol Akhiri Sesi dan Presensi QR
+                        akhiriSesi.classList.remove('hidden');
+                        presensiQR.classList.remove('hidden');
+                        mulaiSesi.classList.add('hidden'); // Sembunyikan tombol Mulai Sesi
+                  }
+                  else {
+                    Swal.fire('Error', 'Gagal memulai sesi.', 'error');
                   }
               });
         });
@@ -245,78 +258,197 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ jamAkhir })
+                body: JSON.stringify({ 
+                     jamAkhir,
+                     status: 'selesai'
+                 })
             }).then(response => response.json())
               .then(data => {
                   if (data.success) {
-                      // Alihkan ke index.php
-                      window.location.href = 'index.php';
-                  }
+                    // Alihkan ke index.php
+                    window.location.href = 'index.php';
+                  }else {
+                        Swal.fire('Error', 'Gagal mengakhiri sesi.', 'error');
+                    }
               });
         });
     });
 
-        // Presensi QR Code
+
+    // Fungsi untuk memperbarui statistik kehadiran
+function updateAttendanceStats(hadir, persentase_hadir, persentase_alpha) {
+    document.querySelector('.jumlah-hadir').textContent = hadir;
+    document.querySelector('.persentase-hadir').textContent = persentase_hadir;
+    document.querySelector('.persentase-alpha').textContent = persentase_alpha;
+}
+
+// Fungsi untuk memperbarui tabel kehadiran
+function updateAttendanceTable(anggota) {
+    const tbody = document.querySelector('table tbody');
+    tbody.innerHTML = ''; // Kosongkan tabel sebelum mengisi ulang
+
+    anggota.forEach((anggota, index) => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+        row.innerHTML = `
+            <td class="px-4 py-2 text-gray-700">${index + 1}</td>
+            <td class="px-4 py-2 text-gray-700">${anggota.nama_lengkap}</td>
+            <td class="px-4 py-2 text-gray-700">${anggota.nim}</td>
+            <td class="px-4 py-2 text-center">
+                <input type="radio" name="status[${anggota.nim}]" value="Hadir" ${anggota.status === 'Hadir' ? 'checked' : ''} class="form-radio text-green-500">
+            </td>
+            <td class="px-4 py-2 text-center">
+                <input type="radio" name="status[${anggota.nim}]" value="Alpha" ${anggota.status === 'Alpha' ? 'checked' : ''} class="form-radio text-red-500">
+            </td>
+            <td class="px-4 py-2 text-center">
+                <button onclick="resetKehadiran('${anggota.nim}')" class="bg-yellow-500 text-white px-3 py-1 rounded-lg hover:bg-yellow-600 transition">
+                    Reset
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Fungsi untuk melakukan polling ke server
+function pollAttendanceStats() {
+    const pertemuanId = <?php echo $id_pertemuan; ?>; // Ambil ID pertemuan dari PHP
+
+    fetch(`../api/get_attendance_stats.php?pertemuan_id=${pertemuanId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Perbarui statistik kehadiran
+                updateAttendanceStats(data.hadir, data.persentase_hadir, data.persentase_alpha);
+
+                // Perbarui tabel kehadiran
+                updateAttendanceTable(data.anggota);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// Mulai polling setiap 2,5 detik
+setInterval(pollAttendanceStats, 2500);
+
+// Panggil fungsi polling saat halaman dimuat
+document.addEventListener('DOMContentLoaded', pollAttendanceStats);
+
+
+    if (presensiQR) {
         presensiQR.addEventListener('click', () => {
             const pertemuanId = <?php echo $id_pertemuan; ?>; // Ambil ID pertemuan dari PHP
 
-        // Tampilkan modal dengan SweetAlert2
-        Swal.fire({
-            title: 'Scan QR untuk Presensi',
-            html: `
-                <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-                    <div id="qrcode"></div>
-                </div>
-            `, // Tempat untuk menampilkan QR
-            showConfirmButton: false,
-            didOpen: () => {
-                const qrCodeElement = document.getElementById('qrcode');
+            // Tampilkan modal dengan SweetAlert2
+            Swal.fire({
+                title: 'Scan QR untuk Presensi',
+                html: `
+                    <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                        <div id="qrcode"></div>
+                    </div>
+                `, // Tempat untuk menampilkan QR
+                showConfirmButton: false,
+                didOpen: () => {
+                    const qrCodeElement = document.getElementById('qrcode');
 
-                // Fungsi untuk menghasilkan QR Code
-                const generateQRCode = () => {
-                    const timestamp = Date.now(); // Tambahkan timestamp untuk membuat data unik
-                    const qrData = `presensi:${pertemuanId}:${timestamp}`; // Data yang akan dienkripsi ke dalam QR
+                    // Fungsi untuk menghasilkan QR Code
+                    const generateQRCode = () => {
+                        const timestamp = Date.now(); // Tambahkan timestamp untuk membuat data unik
+                        const qrData = `presensi:${pertemuanId}:${timestamp}`; // Data yang akan dienkripsi ke dalam QR
 
-                    // Hapus QR Code lama
-                    qrCodeElement.innerHTML = '';
+                        // Hapus QR Code lama
+                        qrCodeElement.innerHTML = '';
 
-                    // Generate QR Code baru
-                    new QRCode(qrCodeElement, {
-                        text: qrData,
-                        width: 200,
-                        height: 200
-                    });
+                        // Generate QR Code baru
+                        new QRCode(qrCodeElement, {
+                            text: qrData,
+                            width: 200,
+                            height: 200
+                        });
 
-                    // Kirim data QR yang baru ke server
-                    fetch('../api/update_qr.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            pertemuan_id: pertemuanId,
-                            timestamp: timestamp
+                        // Kirim data QR yang baru ke server
+                        fetch('../api/update_qr.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                pertemuan_id: pertemuanId,
+                                timestamp: timestamp
+                            })
                         })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data.success) {
-                            console.error('Gagal memperbarui kode QR di server.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-                };
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.success) {
+                                console.error('Gagal memperbarui kode QR di server.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    };
 
-                // Generate QR Code pertama kali
-                generateQRCode();
+                    // Generate QR Code pertama kali
+                    generateQRCode();
 
-                // Update QR Code setiap 10 detik
-                setInterval(generateQRCode, 10000); // 10 detik
-            }
+                    // Update QR Code setiap 5 detik
+                    setInterval(generateQRCode, 5000); // 5 detik
+                }
+            });
         });
-    });
+    }
+
+    // Event listener untuk memproses data QR code
+    const processQRCode = (qrData) => {
+        const qrParts = qrData.split(':'); // Pisahkan string berdasarkan ":"
+        if (qrParts.length !== 3) {
+            Swal.fire('Error', 'Format QR code tidak valid.', 'error');
+            return;
+        }
+
+        const pertemuanId = qrParts[1]; // Ambil bagian kedua (pertemuan_id)
+        const timestamp = qrParts[2]; // Ambil bagian ketiga (timestamp)
+
+        // Kirim data ke server untuk menyimpan absensi
+        fetch('../api/absensi_qr.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                qr_data: qrData,
+                nim: 'NIM_ANGGOTA', // Ganti dengan NIM yang sesuai
+                status: 'Hadir' // Status default
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Perbarui statistik kehadiran secara dinamis
+                document.querySelector('.jumlah-hadir').textContent = data.hadir;
+                document.querySelector('.persentase-hadir').textContent = data.persentase_hadir;
+                document.querySelector('.persentase-alpha').textContent = data.persentase_alpha;
+
+                // Perbarui radio button berdasarkan NIM
+                const nim = data.nim;
+                const radioHadir = document.querySelector(`input[name="status[${nim}]"][value="Hadir"]`);
+                if (radioHadir) {
+                    radioHadir.checked = true; // Centang radio button "Hadir"
+                }
+
+                // Tampilkan pesan sukses
+                Swal.fire('Berhasil!', 'Absensi berhasil dicatat.', 'success');
+            } else {
+                Swal.fire('Error', 'Gagal menyimpan absensi.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('Error', 'Terjadi kesalahan saat mengirim data.', 'error');
+        });
+    };
 
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', function() {
@@ -325,24 +457,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const pertemuanId = <?php echo $id_pertemuan; ?>; // Ambil ID pertemuan dari PHP
 
             // Kirim data ke server menggunakan AJAX
-            fetch('../api/absensi.php', {
+            fetch('../api/absensi_radio.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    type: 'radio', // Flag untuk radio button
                     nim: nim,
                     status: status,
                     pertemuan_id: pertemuanId
                 })
             })
+
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     // Perbarui statistik kehadiran
                     document.querySelector('.jumlah-hadir').textContent = data.hadir;
-                    document.querySelector('.persentase-hadir').textContent = data.persentase_hadir + '%';
-                    document.querySelector('.persentase-alpha').textContent = data.persentase_alpha + '%';
+                    document.querySelector('.persentase-hadir').textContent = data.persentase_hadir;
+                    document.querySelector('.persentase-alpha').textContent = data.persentase_alpha;
                 } else {
                     Swal.fire('Error', 'Gagal menyimpan data kehadiran.', 'error');
                 }
@@ -391,10 +525,9 @@ function resetKehadiran(nim) {
                     Swal.fire('Berhasil!', 'Kehadiran berhasil direset.', 'success');
                     // Perbarui statistik kehadiran
                     document.querySelector('.jumlah-hadir').textContent = data.hadir;
-                    document.querySelector('.persentase-hadir').textContent = data.persentase_hadir + '%';
-                    document.querySelector('.persentase-alpha').textContent = data.persentase_alpha + '%';
-                    // Reload halaman untuk memperbarui tabel
-                    setTimeout(() => location.reload(), 1000);
+                    document.querySelector('.persentase-hadir').textContent = data.persentase_hadir;
+                    document.querySelector('.persentase-alpha').textContent = data.persentase_alpha;
+
                 } else {
                     Swal.fire('Error', 'Gagal mereset kehadiran.', 'error');
                 }
