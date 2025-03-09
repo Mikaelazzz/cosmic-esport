@@ -131,31 +131,31 @@ $no = 1;
                     </div>
                     <div class="bg-white rounded-lg shadow-md p-4">
                     <div class="flex justify-between items-center mb-4">
-    <h3 class="text-gray-700 text-lg">User List</h3>
-    <div class="flex items-center space-x-4">
-        <!-- Dropdown Filter -->
-        <div class="relative">
-            <button id="filterButton" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center">
-                <i class="fas fa-filter mr-2"></i> Filter
-            </button>
-            <div id="filterDropdown" class="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg hidden" style="z-index:1000;">
-                <div class="p-2">
-                    <label class="flex items-center space-x-2">
-                        <input type="checkbox" id="filterBPH" class="form-checkbox" value="BPH">
-                        <span>BPH</span>
-                    </label>
-                    <label class="flex items-center space-x-2">
-                        <input type="checkbox" id="filterAnggota" class="form-checkbox" value="Anggota">
-                        <span>Anggota</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-        <!-- Search Input -->
-        <div class="relative">
-            <input type="text" id="searchInput" placeholder="Search User" class="border border-gray-300 rounded-md pl-4 pr-10 py-2">
-            <i id="searchIcon" class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"></i>
-        </div>
+                    <h3 class="text-gray-700 text-lg">User List</h3>
+                    <div class="flex items-center space-x-4">
+                        <!-- Dropdown Filter -->
+                        <div class="relative">
+                            <button id="filterButton" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center">
+                                <i class="fas fa-filter mr-2"></i> Filter
+                            </button>
+                            <div id="filterDropdown" class="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg hidden" style="z-index:1000;">
+                                <div class="p-2">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" id="filterBPH" class="form-checkbox" value="BPH">
+                                        <span>BPH</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" id="filterAnggota" class="form-checkbox" value="Anggota">
+                                        <span>Anggota</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Search Input -->
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Search User" class="border border-gray-300 rounded-md pl-4 pr-10 py-2">
+                            <i id="searchIcon" class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"></i>
+                        </div>
     </div>
 </div>
                         <table class="w-full text-left">
