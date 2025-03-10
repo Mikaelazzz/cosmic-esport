@@ -11,6 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nim = $_POST['nim'];
     $password = $_POST['password'];
 
+    // Validasi NIM hanya angka
+    if (!ctype_digit($nim)) {
+        $_SESSION['error'] = 'NIM hanya boleh mengandung angka.';
+        header("Location: login.php");
+        exit();
+    }
+
     // Cari pengguna berdasarkan NIM
     $query = $db->prepare("SELECT * FROM users WHERE nim = :nim");
     $query->bindValue(':nim', $nim, SQLITE3_TEXT);
@@ -24,13 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Redirect berdasarkan role
         if ($user['role'] === 'admin') {
-            header("Location: ../admin/home.php");
+            header("Location: ../admin/index.php");
         } else {
-            header("Location: ../page/home.php");
+            header("Location: ../page/index.php");
         }
         exit();
     } else {
-        echo "<script>alert('NIM atau password salah.');</script>";
+        // Simpan pesan kesalahan dalam session
+        $_SESSION['error'] = 'NIM atau password salah.';
     }
 }
 ?>
@@ -44,7 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .custom-bg-left {
             background-color: #727DB6;
@@ -100,7 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <!-- Lupa Password dan Tombol Masuk -->
                 <div class="flex flex-col items-center w-full">
-                    <small class="text-gray-600 font-semibold text-base mb-4">Lupa Password ?</small>
+                    <small class="text-gray-600 font-semibold text-base mb-4">
+                        <a href="lupa_password.php">Lupa Password ?</a>
+                    </small>
                     <button class="text-white px-3 py-1 rounded" style="background-color: #727DB6;">Masuk</button>
                 </div>
             </form>
@@ -109,6 +121,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script>
         $(document).ready(function() {
+
+            $('#nim').on('input', function() {
+                const nim = $(this).val();
+                // Cek apakah input mengandung huruf
+                if (/[^0-9]/.test(nim)) {
+                    $(this).val(nim.replace(/[^0-9]/g, '')); // Hapus karakter non-angka
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Perhatian!',
+                        text: 'NIM hanya boleh mengandung angka.',
+                    });
+                }
+            });
+    
             $('#togglePassword').click(function() {
                 const passwordInput = $('#password');
                 const icon = $(this).find('i');
@@ -116,6 +142,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 passwordInput.attr('type', type);
                 icon.toggleClass('fa-eye fa-eye-slash');
             });
+
+            // Tampilkan SweetAlert2 jika ada pesan kesalahan
+            <?php if (isset($_SESSION['error'])): ?>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: '<?php echo $_SESSION['error']; ?>',
+                });
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
         });
     </script>
 </body>
