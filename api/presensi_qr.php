@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+date_default_timezone_set('Asia/Jakarta'); // Atur zona waktu
+
 // Cek apakah pengguna sudah login
 if (!isset($_SESSION['user'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -29,6 +31,8 @@ if (!isset($_SESSION['qr_active']) ||
     exit();
 }
 
+$waktu_sekarang = date('Y-m-d H:i:s'); // Waktu sekarang dari PHP
+
 // Simpan atau update status kehadiran
 $queryCek = "SELECT * FROM absen WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
 $stmtCek = $db->prepare($queryCek);
@@ -39,17 +43,19 @@ $dataCek = $resultCek->fetchArray(SQLITE3_ASSOC);
 
 if ($dataCek) {
     // Update status jika data sudah ada
-    $queryUpdate = "UPDATE absen SET status = 'Hadir' WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
+    $queryUpdate = "UPDATE absen SET status = 'Hadir', jam = :jam WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
     $stmtUpdate = $db->prepare($queryUpdate);
+    $stmtUpdate->bindValue(':jam', $waktu_sekarang, SQLITE3_TEXT);
     $stmtUpdate->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
     $stmtUpdate->bindValue(':nim', $nim, SQLITE3_TEXT);
     $stmtUpdate->execute();
 } else {
     // Insert data baru jika belum ada
-    $queryInsert = "INSERT INTO absen (pertemuan_id, nim, status) VALUES (:pertemuan_id, :nim, 'Hadir')";
+    $queryInsert = "INSERT INTO absen (pertemuan_id, nim, status, jam) VALUES (:pertemuan_id, :nim, 'Hadir', :jam)";
     $stmtInsert = $db->prepare($queryInsert);
     $stmtInsert->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
     $stmtInsert->bindValue(':nim', $nim, SQLITE3_TEXT);
+    $stmtUpdate->bindValue(':jam', $waktu_sekarang, SQLITE3_TEXT);
     $stmtInsert->execute();
 }
 
