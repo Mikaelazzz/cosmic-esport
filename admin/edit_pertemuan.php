@@ -59,7 +59,7 @@ if (!$pertemuan) {
         <div class="flex items-center space-x-2">
             <span class="text-xl">Edit Pertemuan UKM</span>
         </div>
-        <a href="pertemuan.php" class="text-white p-3 border-2 rounded-full hover:bg-[#5c6491] border-white w-10 h-10 flex items-center justify-center flex-col space-y-0">
+        <a onclick="window.history.back()" class="text-white p-3 border-2 rounded-full hover:bg-[#5c6491] border-white w-10 h-10 flex items-center justify-center flex-col space-y-0">
             <span class="text-lg">×</span>
         </a>
     </header>
