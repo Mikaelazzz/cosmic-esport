@@ -310,7 +310,6 @@ function updateAttendanceTable(anggota) {
     });
 }
 
-// Fungsi untuk melakukan polling ke server
 function pollAttendanceStats() {
     const pertemuanId = <?php echo $id_pertemuan; ?>; // Ambil ID pertemuan dari PHP
 
@@ -321,8 +320,19 @@ function pollAttendanceStats() {
                 // Perbarui statistik kehadiran
                 updateAttendanceStats(data.hadir, data.persentase_hadir, data.persentase_alpha);
 
-                // Perbarui tabel kehadiran
-                updateAttendanceTable(data.anggota);
+                // Perbarui tampilan radio button
+                data.anggota.forEach(anggota => {
+                    const radioHadir = document.querySelector(`input[name="status[${anggota.nim}]"][value="Hadir"]`);
+                    const radioAlpha = document.querySelector(`input[name="status[${anggota.nim}]"][value="Alpha"]`);
+
+                    if (anggota.status === 'Hadir') {
+                        radioHadir.checked = true;
+                        radioAlpha.checked = false;
+                    } else if (anggota.status === 'Alpha') {
+                        radioHadir.checked = false;
+                        radioAlpha.checked = true;
+                    }
+                });
             }
         })
         .catch(error => {
@@ -451,44 +461,53 @@ document.addEventListener('DOMContentLoaded', pollAttendanceStats);
     };
 
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const nim = this.name.match(/\[(.*?)\]/)[1]; // Ambil NIM dari nama radio button
-            const status = this.value; // Ambil status (Hadir/Alpha)
-            const pertemuanId = <?php echo $id_pertemuan; ?>; // Ambil ID pertemuan dari PHP
+    radio.addEventListener('change', function() {
+        const nim = this.name.match(/\[(.*?)\]/)[1]; // Ambil NIM dari nama radio button
+        const status = this.value; // Ambil status (Hadir/Alpha)
+        const pertemuanId = <?php echo $id_pertemuan; ?>; // Ambil ID pertemuan dari PHP
 
-            // Kirim data ke server menggunakan AJAX
-            fetch('../api/absensi_radio.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    type: 'radio', // Flag untuk radio button
-                    nim: nim,
-                    status: status,
-                    pertemuan_id: pertemuanId
-                })
+        // Kirim data ke server menggunakan AJAX
+        fetch('../api/absensi_radio.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'radio', // Flag untuk radio button
+                nim: nim,
+                status: status,
+                pertemuan_id: pertemuanId
             })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Perbarui statistik kehadiran
+                document.querySelector('.jumlah-hadir').textContent = data.hadir;
+                document.querySelector('.persentase-hadir').textContent = data.persentase_hadir;
+                document.querySelector('.persentase-alpha').textContent = data.persentase_alpha;
 
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Perbarui statistik kehadiran
-                    document.querySelector('.jumlah-hadir').textContent = data.hadir;
-                    document.querySelector('.persentase-hadir').textContent = data.persentase_hadir;
-                    document.querySelector('.persentase-alpha').textContent = data.persentase_alpha;
-                } else {
-                    Swal.fire('Error', 'Gagal menyimpan data kehadiran.', 'error');
+                // Perbarui tampilan radio button
+                const radioHadir = document.querySelector(`input[name="status[${nim}]"][value="Hadir"]`);
+                const radioAlpha = document.querySelector(`input[name="status[${nim}]"][value="Alpha"]`);
+
+                if (status === 'Hadir') {
+                    radioHadir.checked = true;
+                    radioAlpha.checked = false;
+                } else if (status === 'Alpha') {
+                    radioHadir.checked = false;
+                    radioAlpha.checked = true;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error', 'Terjadi kesalahan saat mengirim data.', 'error');
-            });
+            } else {
+                Swal.fire('Error', 'Gagal menyimpan data kehadiran.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('Error', 'Terjadi kesalahan saat mengirim data.', 'error');
         });
     });
-
-    
+});
 });
 
 // Fungsi untuk mereset kehadiran
