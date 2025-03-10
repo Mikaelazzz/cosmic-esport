@@ -116,7 +116,7 @@ $no = 1;
                 <h1 class="text-3xl font-bold">COSMIC ESPORT</h1>
                 <!-- Profile Image -->
                 <a href="profil.php" class="w-16 h-16 rounded-full overflow-hidden">
-                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/1.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
+                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/default.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
                 </a>
             </header>
 
@@ -173,14 +173,10 @@ $no = 1;
                             </thead>
                             <tbody>
                             <?php while ($row = $result->fetchArray(SQLITE3_ASSOC)): ?>
-                                <tr class="<?php echo $no % 2 === 0 ? 'bg-blue-200' : 'bg-blue-100'; ?>" data-jabatan="<?php echo htmlspecialchars($row['jabatan'] ?? ''); ?>">
+                                <tr class="<?php echo $no % 2 === 0 ? 'bg-blue-200' : 'bg-blue-100'; ?>" data-jabatan="<?php echo htmlspecialchars($row['jabatan'] ?? ''); ?>" onclick="window.location.href='profil_user.php?id=<?php echo $row['id']; ?>'">
                                     <td class="p-2"><?php echo $no++; ?></td>
                                     <td class="p-2">
-                                        <?php if (!empty($row['profile_image'])): ?>
-                                            <img src="<?php echo htmlspecialchars($row['profile_image']); ?>" alt="Profile Image" class="w-10 h-10 rounded-full object-cover">
-                                        <?php else: ?>
-                                            <div class="bg-gray-300 rounded-full w-10 h-10"></div>
-                                        <?php endif; ?>
+                                        <img src="<?php echo !empty($row['profile_image']) ? htmlspecialchars($row['profile_image']) : '../src/default.png'; ?>" alt="Profile Image" class="w-10 h-10 rounded-full object-cover">
                                     </td>
                                     <td class="p-2"><?php echo htmlspecialchars($row['nama_lengkap'] ?? ''); ?></td>
                                     <td class="p-2"><?php echo htmlspecialchars($row['nim'] ?? ''); ?></td>
@@ -430,6 +426,8 @@ $no = 1;
                     const password = document.getElementById('password').value;
                     const role = document.getElementById('role').value;
                     const jabatan = role === 'admin' ? document.getElementById('jabatan').value : 'Anggota';
+                    // Generate token
+                    const token = generateToken();
 
                     // Validasi input
                     if (!namaLengkap || !nim || !email || !password || !role) {
@@ -468,7 +466,8 @@ $no = 1;
                                     email: email,
                                     password: password,
                                     role: role,
-                                    jabatan: jabatan
+                                    jabatan: jabatan,
+                                    token: token
                                 })
                             })
                             .then(response => {
@@ -495,9 +494,15 @@ $no = 1;
                 }
             });
         }
-
-
-
+        // Fungsi untuk generate token
+        function generateToken(length = 8) {
+            const characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let token = '';
+            for (let i = 0; i < length; i++) {
+                token += characters[Math.floor(Math.random() * characters.length)];
+            }
+            return token;
+        }
     </script>
     </body>
 </html>
