@@ -42,7 +42,7 @@ if ($stmt->execute()) {
     $lastInsertId = $db->lastInsertRowID();
 
     // Update nama topik dengan ID yang benar
-    $formattedNamaTopik = "Pertemuan Rutin " . $lastInsertId . $namaTopik;
+    $formattedNamaTopik = "Pertemuan Rutin " . $lastInsertId . ' ' . $namaTopik;;
 
     // Update nama topik di database
     $updateQuery = "UPDATE jadwal_pertemuan SET nama_topik = :nama_topik WHERE id = :id";

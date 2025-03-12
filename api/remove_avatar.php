@@ -10,7 +10,7 @@ if (!isset($_SESSION['user'])) {
 // Cek apakah permintaan untuk menghapus avatar
 if (isset($_POST['remove_avatar'])) {
     // Path gambar default
-    $default_image = '../src/1.png';
+    $default_image = '../src/default.png';
 
     // Update database untuk menghapus gambar profil
     $db = new SQLite3('../db/ukm.db');

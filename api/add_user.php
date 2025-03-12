@@ -30,6 +30,7 @@ $email = $data['email'];
 $password = password_hash($data['password'], PASSWORD_DEFAULT); // Hash password
 $role = $data['role'];
 $jabatan = $data['jabatan'];
+$token = $data['token']; // Ambil token dari form
 
 // Validasi NIM: panjang 9-10 karakter dan hanya angka
 if (!preg_match('/^\d{9,10}$/', $nim)) {
@@ -38,7 +39,7 @@ if (!preg_match('/^\d{9,10}$/', $nim)) {
 }
 
 // Query untuk menambahkan user baru
-$query = "INSERT INTO users (nama_lengkap, nim, email, password, role, jabatan) VALUES (:nama_lengkap, :nim, :email, :password, :role, :jabatan)";
+$query = "INSERT INTO users (nama_lengkap, nim, email, password, role, jabatan, token) VALUES (:nama_lengkap, :nim, :email, :password, :role, :jabatan, :token)";
 $stmt = $db->prepare($query);
 $stmt->bindValue(':nama_lengkap', $nama_lengkap, SQLITE3_TEXT);
 $stmt->bindValue(':nim', $nim, SQLITE3_TEXT);
@@ -46,6 +47,7 @@ $stmt->bindValue(':email', $email, SQLITE3_TEXT);
 $stmt->bindValue(':password', $password, SQLITE3_TEXT);
 $stmt->bindValue(':role', $role, SQLITE3_TEXT);
 $stmt->bindValue(':jabatan', $jabatan, SQLITE3_TEXT);
+$stmt->bindValue(':token', $token, SQLITE3_TEXT); // Simpan token ke database
 
 // Eksekusi query
 if ($stmt->execute()) {

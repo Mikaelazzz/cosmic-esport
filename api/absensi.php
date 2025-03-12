@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+date_default_timezone_set('Asia/Jakarta'); // Atur zona waktu
+
 // Cek apakah pengguna sudah login
 if (!isset($_SESSION['user'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -62,6 +64,7 @@ if (!$hari) {
 }
 
 $hari = $hari['hari']; // Ambil nilai hari dari hasil query
+$waktu_sekarang = date('Y-m-d H:i:s'); // Waktu sekarang dari PHP
 
 // Simpan atau update status kehadiran
 $queryCek = "SELECT * FROM absen WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
@@ -73,10 +76,11 @@ $dataCek = $resultCek->fetchArray(SQLITE3_ASSOC);
 
 if ($dataCek) {
     // Update status jika data sudah ada
-    $queryUpdate = "UPDATE absen SET status = :status, hari = :hari WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
+    $queryUpdate = "UPDATE absen SET status = :status, hari = :hari, jam = :jam WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
     $stmtUpdate = $db->prepare($queryUpdate);
     $stmtUpdate->bindValue(':status', $data['status'], SQLITE3_TEXT);
     $stmtUpdate->bindValue(':hari', $hari, SQLITE3_TEXT);
+    $stmtUpdate->bindValue(':jam', $waktu_sekarang, SQLITE3_TEXT);
     $stmtUpdate->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
     $stmtUpdate->bindValue(':nim', $data['nim'], SQLITE3_TEXT);
     $resultUpdate = $stmtUpdate->execute();
@@ -87,12 +91,13 @@ if ($dataCek) {
     }
 } else {
     // Insert data baru jika belum ada
-    $queryInsert = "INSERT INTO absen (pertemuan_id, nim, status, hari) VALUES (:pertemuan_id, :nim, :status, :hari)";
+    $queryInsert = "INSERT INTO absen (pertemuan_id, nim, status, hari, jam) VALUES (:pertemuan_id, :nim, :status, :hari, :jam)";
     $stmtInsert = $db->prepare($queryInsert);
     $stmtInsert->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
     $stmtInsert->bindValue(':nim', $data['nim'], SQLITE3_TEXT);
     $stmtInsert->bindValue(':status', $data['status'], SQLITE3_TEXT);
     $stmtInsert->bindValue(':hari', $hari, SQLITE3_TEXT);
+    $stmtInsert->bindValue(':jam', $waktu_sekarang, SQLITE3_TEXT);
     $resultInsert = $stmtInsert->execute();
 
     if (!$resultInsert) {

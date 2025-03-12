@@ -3,13 +3,14 @@ session_start();
 
 // Cek apakah pengguna sudah login
 if (!isset($_SESSION['user'])) {
-    header("Location: ../page/login.php");
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit();
 }
 
 // Pastikan $_SESSION['user'] adalah array
 if (!is_array($_SESSION['user'])) {
-    die("Invalid session data. Expected an array.");
+    echo json_encode(['success' => false, 'message' => 'Invalid session data. Expected an array.']);
+    exit();
 }
 
 // Ambil data pengguna dari session
@@ -17,7 +18,7 @@ $user = $_SESSION['user'];
 
 // Cek role pengguna
 if ($user['role'] !== 'admin') {
-    header("Location: ../page/home.php");
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit();
 }
 
@@ -35,15 +36,12 @@ if (isset($_GET['id'])) {
 
     // Eksekusi query
     if ($stmt->execute()) {
-        // Redirect kembali ke halaman anggota.php setelah penghapusan
-        header("Location: ../admin/anggota.php");
-        exit();
+        echo json_encode(['success' => true, 'message' => 'Pengguna berhasil dihapus']);
     } else {
-        die("Gagal menghapus user.");
+        echo json_encode(['success' => false, 'message' => 'Gagal menghapus user']);
     }
 } else {
-    // Jika tidak ada ID, redirect ke halaman anggota.php
-    header("Location: ../admin/anggota.php");
-    exit();
+    // Jika tidak ada ID, kembalikan pesan error
+    echo json_encode(['success' => false, 'message' => 'ID tidak valid']);
 }
 ?>
