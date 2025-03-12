@@ -131,7 +131,7 @@ $resultRiwayat = $stmtRiwayat->execute();
                 <h1 class="text-3xl font-bold">COSMIC ESPORT</h1>
                 <!-- Profile Image -->
                 <a href="profil.php" class="w-16 h-16 rounded-full overflow-hidden">
-                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/1.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
+                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/default.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
                 </a>
             </header>
 
@@ -140,7 +140,7 @@ $resultRiwayat = $stmtRiwayat->execute();
                 <section class="p-4">
                 <div class="flex justify-between items-center mb-4">
                         <h2 class="text-gray-700 text-xl">Manage Kegiatan</h2>
-                        <button onclick="showAddUserForm()" class="bg-purple-500 text-white px-4 py-2 rounded-md flex items-center">
+                        <button onclick="showAddUserForm()" class="bg-[#727DB6] hover:bg-[#5c6491] text-white px-4 py-2 rounded-md flex items-center">
                             <i class="fas fa-plus mr-2"></i> Add Kegiatan
                         </button>
                     </div>
