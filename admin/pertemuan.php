@@ -39,6 +39,36 @@ $no = 1;
     <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <style>
+/* Tambahkan style ini di head */
+.mobile-view-card {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-view-card {
+        display: block;
+    }
+    .desktop-view-table {
+        display: none;
+    }
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    .header button {
+        padding: 0.5rem;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-view-card {
+        display: none;
+    }
+    .desktop-view-table {
+        display: block;
+    }
+}
+</style>
 </head>
 <body>
     <section class="flex h-screen" style="font-family: 'Poppins';">
@@ -105,7 +135,7 @@ $no = 1;
                 <h1 class="text-3xl font-bold">COSMIC ESPORT</h1>
                 <!-- Profile Image -->
                 <a href="profil.php" class="w-16 h-16 rounded-full overflow-hidden">
-                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/1.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
+                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/default.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
                 </a>
             </header>
 
@@ -114,54 +144,116 @@ $no = 1;
             <section class="p-4">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-gray-700 text-xl">Manage Pertemuan</h2>
-                        <button onclick="showAddPertemuanForm()" class="bg-purple-500 text-white px-4 py-2 rounded-md flex items-center">
+                        <button onclick="showAddPertemuanForm()" class="bg-[#727DB6] hover:bg-[#5c6491] text-white px-4 py-2 rounded-md flex items-center">
                             <i class="fas fa-plus mr-2"></i> Add Pertemuan
                         </button>
                     </div>
                     <div class="bg-white rounded-lg shadow-md p-4">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="bg-gray-200">
-                                <th class="p-2">No</th>
-                                <th class="p-2">Nama Topik</th>
-                                <th class="p-2">Hari</th>
-                                <th class="p-2">Tanggal</th>
-                                <th class="p-2">Kelas</th>
-                                <th class="p-2">Jam Mulai</th>
-                                <th class="p-2">Jam Akhir</th>
-                                <th class="p-2">Jam Pertemuan</th>
-                                <th class="p-2">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($row = $result->fetchArray(SQLITE3_ASSOC)): ?>
-                                <tr class="<?php echo $no % 2 === 0 ? 'bg-blue-200' : 'bg-blue-100'; ?>">
-                                    <td class="p-2"><?php echo $no++; ?></td>
-                                    <td class="p-2">
-                                    <?php
-                                    $namaTopik = htmlspecialchars($row['nama_topik']);
-                                    echo $namaTopik;
-                                    ?>
-                                    </td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['hari'] ?? 'Jumat'); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['tanggal'] ?? ''); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['kelas'] ?? ''); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['jam_mulai'] ?? '00:00'); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['jam_akhir'] ?? '00:00'); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['jam_pertemuan'] ?? ''); ?></td>
-                                    <td class="p-2 flex">
-                                        <button onclick="window.location.href='edit_pertemuan.php?id=<?php echo $row['id']; ?>'" class="bg-blue-500 text-white px-4 py-2 mr-2 rounded-md flex items-center">
-                                            <i class="fas fa-edit mr-2"></i> Edit
-                                        </button>
-                                        <button onclick="confirmDelete(<?php echo $row['id']; ?>)" class="bg-red-500 text-white px-4 py-2 rounded-md flex items-center">
-                                            <i class="fas fa-trash mr-2"></i> Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                        <div class="flex justify-between items-center mt-4">
+                        <div class="overflow-x-auto desktop-view-table">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-2">No</th>
+                                        <th class="p-2">Nama Topik</th>
+                                        <th class="p-2">Hari</th>
+                                        <th class="p-2">Tanggal</th>
+                                        <th class="p-2">Kelas</th>
+                                        <th class="p-2">Jam Mulai</th>
+                                        <th class="p-2">Jam Akhir</th>
+                                        <th class="p-2">Jam Pertemuan</th>
+                                        <th class="p-2">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php while ($row = $result->fetchArray(SQLITE3_ASSOC)): ?>
+                                        <tr class="<?php echo $no % 2 === 0 ? 'bg-blue-200' : 'bg-blue-100'; ?> hover:bg-blue-300 cursor-pointer">
+                                            <td class="p-2"><?php echo $no++; ?></td>
+                                            <td class="p-2">
+                                            <?php
+                                            $namaTopik = htmlspecialchars($row['nama_topik']);
+                                            echo ' ' . $namaTopik;
+                                            ?>
+                                            </td>
+                                            <td class="p-2"><?php echo htmlspecialchars($row['hari'] ?? 'Jumat'); ?></td>
+                                            <td class="p-2"><?php echo htmlspecialchars($row['tanggal'] ?? ''); ?></td>
+                                            <td class="p-2"><?php echo htmlspecialchars($row['kelas'] ?? ''); ?></td>
+                                            <td class="p-2"><?php echo htmlspecialchars($row['jam_mulai'] ?? '00:00'); ?></td>
+                                            <td class="p-2"><?php echo htmlspecialchars($row['jam_akhir'] ?? '00:00'); ?></td>
+                                            <td class="p-2"><?php echo htmlspecialchars($row['jam_pertemuan'] ?? ''); ?></td>
+                                            <td class="p-2 flex">
+                                                <button onclick="window.location.href='edit_pertemuan.php?id=<?php echo $row['id']; ?>'" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 mr-2 rounded-md flex items-center">
+                                                    <i class="fas fa-edit mr-2"></i> Edit
+                                                </button>
+                                                <button onclick="confirmDelete(<?php echo $row['id']; ?>)" class="bg-red-500 hover:bg-red-700 text-white px-4 py-2 mr-2 rounded-md flex items-center">
+                                                    <i class="fas fa-trash mr-2"></i> Delete
+                                                </button>
+                                                <button onclick="window.location.href='detail_read.php?id=<?php echo $row['id']; ?>'" class="bg-yellow-500 hover:bg-yellow-700 text-white px-4 py-2 rounded-md flex items-center">
+                                                    <i class="fas fa-book-open-reader mr-2"></i> Lihat
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mobile View: Cards -->
+            <div class="mobile-view-card space-y-4">
+                <?php 
+                // Reset nomor urut
+                $no = 1;
+                $result->reset(); // Reset query result
+                while ($row = $result->fetchArray(SQLITE3_ASSOC)): 
+                ?>
+                    <div class="p-3 rounded-lg bg-blue-200 shadow-md ">
+                        <div class="text-sm mb-3">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-semibold"><?php echo $no++.'. '.htmlspecialchars($row['nama_topik'] ?? 'Pertemuan Rutin'); ?></h4>
+                                    <p class="text-xs text-gray-600 mt-1">
+                                        <?php echo htmlspecialchars($row['hari'] ?? 'Jumat').', '.htmlspecialchars($row['tanggal'] ?? ''); ?>
+                                    </p>
+                                </div>
+                                <span class="bg-purple-100 text-purple-600 text-xs font-bold px-2 py-1 rounded-full">
+                                    <?php echo htmlspecialchars($row['kelas'] ?? ''); ?>
+                                </span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <p class="text-gray-600">Jam Mulai</p>
+                                    <p><?php echo htmlspecialchars($row['jam_mulai'] ?? '00:00'); ?></p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">Jam Akhir</p>
+                                    <p><?php echo htmlspecialchars($row['jam_akhir'] ?? '00:00'); ?></p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-gray-600">Jadwal Pertemuan</p>
+                                    <p><?php echo htmlspecialchars($row['jam_pertemuan'] ?? ''); ?></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col space-y-2">
+                            <button onclick="window.location.href='edit_pertemuan.php?id=<?php echo $row['id']; ?>'" 
+                                    class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-2 rounded-md flex items-center justify-center text-sm">
+                                <i class="fas fa-edit mr-2"></i> Edit
+                            </button>
+                            <button onclick="confirmDelete(<?php echo $row['id']; ?>)" 
+                                    class="bg-red-500 hover:bg-red-700 text-white px-3 py-2 rounded-md flex items-center justify-center text-sm">
+                                <i class="fas fa-trash mr-2"></i> Delete
+                            </button>
+                            <button onclick="window.location.href='detail_read.php?id=<?php echo $row['id']; ?>'" 
+                                    class="bg-yellow-500 hover:bg-yellow-700 text-white px-3 py-2 rounded-md flex items-center justify-center text-sm">
+                                <i class="fas fa-book-open-reader mr-2"></i> Lihat
+                            </button>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+
+                        <div class="flex flex-col md:flex-row justify-between items-center mt-4 text-sm">
                             <div class="text-gray-700">Rows per page: 
                                 <select class="border border-gray-300 rounded-md p-1">
                                     <option>10</option>
