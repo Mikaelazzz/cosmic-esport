@@ -44,12 +44,38 @@ $no = 1;
     <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
     <style>
     #filterDropdown {
         z-index: 1000; /* Pastikan dropdown muncul di atas elemen lain */
     }
-</style>
+    
+    @media (max-width: 768px) {
+        .mobile-view-card {
+            display: block;
+        }
+        .desktop-view-table {
+            display: none;
+        }
+        .header h1 {
+            font-size: 1.5rem; /* Ukuran font header lebih kecil */
+        }
+        .header button {
+            padding: 0.5rem; /* Padding tombol lebih kecil */
+        }
+        .sidebar {
+            width: 100%; /* Sidebar full width pada mobile */
+        }
+    }
+    
+    @media (min-width: 769px) {
+        .mobile-view-card {
+            display: none;
+        }
+        .desktop-view-table {
+            display: table;
+        }
+    }
+    </style>
 </head>
 <body>
     <section class="flex h-screen" style="font-family: 'Poppins';">
@@ -109,110 +135,193 @@ $no = 1;
         <!-- Main Content -->
         <div class="flex-1 flex flex-col">
             <!-- Header -->
-            <header class=" text-white p-4 flex justify-between items-center" style="background-color: #727DB6; z-index: 999;">
+            <header class="text-white p-4 flex justify-between items-center" style="background-color: #727DB6; z-index: 999;">
                 <button id="menuButton" class="p-2">
                     <i class="fa-solid fa-bars text-xl"></i>
                 </button>
-                <h1 class="text-3xl font-bold">COSMIC ESPORT</h1>
+                <h1 class="text-xl md:text-3xl font-bold">COSMIC ESPORT</h1>
                 <!-- Profile Image -->
-                <a href="profil.php" class="w-16 h-16 rounded-full overflow-hidden">
+                <a href="profil.php" class="w-10 h-10 md:w-16 md:h-16 rounded-full overflow-hidden">
                     <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/default.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
                 </a>
             </header>
 
-
             <main class="flex-1 overflow-y-auto h-[calc(100vh-5rem)]">
-                <section class="p-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-gray-700 text-xl">Manage User</h2>
-                        <button onclick="showAddUserForm()" class="bg-purple-500 text-white px-4 py-2 rounded-md flex items-center">
-                            <i class="fas fa-plus mr-2"></i> Add User
-                        </button>
+                <section class="p-2 md:p-4">
+                <div class="flex flex-1 md:flex-row justify-between items-start md:items-center mb-4">
+                    <h2 class="text-gray-700 text-xl">Manage User</h2>
+                    <button onclick="showAddUserForm()" class="bg-[#727DB6] hover:bg-[#5c6491] text-white px-4 py-2 rounded-md flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Add User
+                    </button>
+                </div>
+                    
+    <div class="bg-white rounded-lg shadow-md p-2 md:p-4">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+    <h3 class="text-gray-700 text-base md:text-lg mb-2 md:mb-0">User List</h3>
+    <div class="flex flex-col md:flex-row w-full md:w-auto">
+        <!-- Filter and Search Row for Mobile -->
+        <div class="flex w-full space-x-2 md:hidden mb-2">
+            <!-- Dropdown Filter - Mobile -->
+            <div class="relative flex-1">
+                <button id="filterButton" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center text-xs w-full justify-between">
+                    <span><i class="fas fa-filter mr-2"></i>FILTER</span>
+                    <i class="fas fa-chevron-down ml-1"></i>
+                </button>
+                <div id="filterDropdown" class="absolute left-0 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg hidden" style="z-index:1000;">
+                    <div class="p-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="filterBPH" class="form-checkbox" value="BPH">
+                            <span class="text-xs">BPH</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="filterAnggota" class="form-checkbox" value="Anggota">
+                            <span class="text-xs">Anggota</span>
+                        </label>
                     </div>
-                    <div class="bg-white rounded-lg shadow-md p-4">
-                    <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-gray-700 text-lg">User List</h3>
-                    <div class="flex items-center space-x-4">
-                        <!-- Dropdown Filter -->
-                        <div class="relative">
-                            <button id="filterButton" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center">
-                                <i class="fas fa-filter mr-2"></i> Filter
-                            </button>
-                            <div id="filterDropdown" class="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg hidden" style="z-index:1000;">
-                                <div class="p-2">
-                                    <label class="flex items-center space-x-2">
-                                        <input type="checkbox" id="filterBPH" class="form-checkbox" value="BPH">
-                                        <span>BPH</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2">
-                                        <input type="checkbox" id="filterAnggota" class="form-checkbox" value="Anggota">
-                                        <span>Anggota</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Search Input -->
-                        <div class="relative">
-                            <input type="text" id="searchInput" placeholder="Search User" class="border border-gray-300 rounded-md pl-4 pr-10 py-2">
-                            <i id="searchIcon" class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"></i>
-                        </div>
+                </div>
+            </div>
+            
+            <!-- Search Input - Mobile -->
+            <div class="relative flex-1">
+                <input type="text" id="searchInputMobile" placeholder="SEARCH" class="border border-gray-300 rounded-md pl-2 pr-6 py-2 w-full text-xs">
+                <i id="searchIconMobile" class="fas fa-search absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"></i>
+            </div>
+        </div>
+        
+        <!-- Desktop Filter and Search -->
+        <div class="hidden md:flex md:space-x-4 w-full md:w-auto">
+            <!-- Dropdown Filter - Desktop -->
+            <div class="relative w-full md:w-auto mb-2 md:mb-0">
+                <button id="filterButtonDesktop" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center text-base w-full md:w-auto justify-between">
+                    <span><i class="fas fa-filter mr-2"></i> Filter</span>
+                    <i class="fas fa-chevron-down ml-2"></i>
+                </button>
+                <div id="filterDropdownDesktop" class="absolute left-0 md:right-0 mt-2 w-full md:w-48 bg-white border border-gray-300 rounded-md shadow-lg hidden" style="z-index:1000;">
+                    <div class="p-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="filterBPHDesktop" class="form-checkbox" value="BPH">
+                            <span>BPH</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="filterAnggotaDesktop" class="form-checkbox" value="Anggota">
+                            <span>Anggota</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Input - Desktop -->
+            <div class="relative w-full md:w-auto">
+                <input type="text" id="searchInput" placeholder="Search User" class="border border-gray-300 rounded-md pl-4 pr-10 py-2 w-full">
+                <i id="searchIcon" class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"></i>
+            </div>
+        </div>
     </div>
 </div>
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="bg-gray-200">
-                                    <th class="p-2">No</th>
-                                    <th class="p-2">Profile</th>
-                                    <th class="p-2">Nama</th>
-                                    <th class="p-2">NIM</th>
-                                    <th class="p-2">Email</th>
-                                    <th class="p-2">Jabatan</th>
-                                    <th class="p-2">Absen</th>
-                                    <th class="p-2">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            <?php while ($row = $result->fetchArray(SQLITE3_ASSOC)): ?>
-                                <tr class="<?php echo $no % 2 === 0 ? 'bg-blue-200' : 'bg-blue-100'; ?>" data-jabatan="<?php echo htmlspecialchars($row['jabatan'] ?? ''); ?>" onclick="window.location.href='profil_user.php?id=<?php echo $row['id']; ?>'">
-                                    <td class="p-2"><?php echo $no++; ?></td>
-                                    <td class="p-2">
-                                        <img src="<?php echo !empty($row['profile_image']) ? htmlspecialchars($row['profile_image']) : '../src/default.png'; ?>" alt="Profile Image" class="w-10 h-10 rounded-full object-cover">
-                                    </td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['nama_lengkap'] ?? ''); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['nim'] ?? ''); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['email'] ?? ''); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['jabatan'] ?? ''); ?></td>
-                                    <td class="p-2"><?php echo htmlspecialchars($row['total_absen'] ?? ''); ?>/14</td>
-                                    <td class="p-2">
-                                        <button onclick="confirmDelete(<?php echo $row['id']; ?>)" class="bg-red-500 text-white px-4 py-2 rounded-md flex items-center">
+                        
+                        <!-- Desktop View: Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left desktop-view-table">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-2">No</th>
+                                        <th class="p-2">Profile</th>
+                                        <th class="p-2">Nama</th>
+                                        <th class="p-2">NIM</th>
+                                        <th class="p-2">Email</th>
+                                        <th class="p-2">Jabatan</th>
+                                        <th class="p-2">Absen</th>
+                                        <th class="p-2">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php 
+                                // Reset counter for desktop view
+                                $no = 1;
+                                // Reset result pointer
+                                $db->query("BEGIN"); // Start transaction to reset query
+                                $result = $db->query($query);
+                                while ($row = $result->fetchArray(SQLITE3_ASSOC)): 
+                                ?>
+                                    <tr class="<?php echo $no % 2 === 0 ? 'bg-blue-200' : 'bg-blue-100'; ?>" data-jabatan="<?php echo htmlspecialchars($row['jabatan'] ?? ''); ?>">
+                                        <td class="p-2"><?php echo $no++; ?></td>
+                                        <td class="p-2">
+                                            <img src="<?php echo !empty($row['profile_image']) ? htmlspecialchars($row['profile_image']) : '../src/default.png'; ?>" alt="Profile Image" class="w-10 h-10 rounded-full object-cover">
+                                        </td>
+                                        <td class="p-2"><?php echo htmlspecialchars($row['nama_lengkap'] ?? ''); ?></td>
+                                        <td class="p-2"><?php echo htmlspecialchars($row['nim'] ?? ''); ?></td>
+                                        <td class="p-2"><?php echo htmlspecialchars($row['email'] ?? ''); ?></td>
+                                        <td class="p-2"><?php echo htmlspecialchars($row['jabatan'] ?? ''); ?></td>
+                                        <td class="p-2"><?php echo htmlspecialchars($row['total_absen'] ?? ''); ?>/14</td>
+                                        <td class="p-2 flex">
+                                            <button onclick="window.location.href='profil_user.php?id=<?php echo $row['id']; ?>'" class="mr-2 bg-blue-500 hover:bg-blue-700 text-white px-2 py-1 md:px-4 md:py-2 rounded-md flex items-center text-sm">
+                                                <i class="fas fa-edit mr-1 md:mr-2"></i> Edit
+                                            </button>
+                                            <button onclick="confirmDelete(<?php echo $row['id']; ?>)" class="bg-red-500 hover:bg-red-700 text-white px-2 py-1 md:px-4 md:py-2 rounded-md flex items-center text-sm">
+                                                <i class="fas fa-trash mr-1 md:mr-2"></i> Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Mobile View: Cards -->
+                        <div class="mobile-view-card space-y-4">
+                            <?php 
+                            // Reset counter for mobile view
+                            $no = 1;
+                            $result = $db->query($query);
+                            while ($row = $result->fetchArray(SQLITE3_ASSOC)): 
+                            ?>
+                                <div class="p-3 rounded-lg bg-blue-200 shadow-sm" data-jabatan="<?php echo htmlspecialchars($row['jabatan'] ?? ''); ?>">
+                                    <div class="flex items-center justify-center mb-2 ">
+                                        <img src="<?php echo !empty($row['profile_image']) ? htmlspecialchars($row['profile_image']) : '../src/default.png'; ?>" alt="Profile Image" class="w-20 h-20 rounded-full object-cover mr-3 ">
+                                    </div>
+                                    
+                                    <div class="text-sm mb-3">
+                                        <div class="flex justify-between">
+                                            <h4 class="font-semibold"><?php echo htmlspecialchars($row['nama_lengkap'] ?? ''); ?></h4>
+                                            <p class="text-sm text-gray-600"><?php echo htmlspecialchars($row['jabatan'] ?? ''); ?></p>
+                                        </div>
+                                        <p class="text-xs mb-1 mt-2"><?php echo htmlspecialchars($row['nim'] ?? ''); ?></p>
+                                        <p class="text-xs mb-1"><?php echo htmlspecialchars($row['email'] ?? ''); ?></p>
+                                        <p class="text-xs mb-1 mt-2"><?php echo htmlspecialchars($row['total_absen'] ?? ''); ?>/14</p>
+                                    </div>
+                                    
+                                    <div class="flex space-x-2">
+                                        <button onclick="window.location.href='profil_user.php?id=<?php echo $row['id']; ?>'" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-3 py-2 rounded-md flex items-center justify-center text-sm">
+                                            <i class="fas fa-edit mr-2"></i> Edit
+                                        </button>
+                                        <button onclick="confirmDelete(<?php echo $row['id']; ?>)" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-3 py-2 rounded-md flex items-center justify-center text-sm">
                                             <i class="fas fa-trash mr-2"></i> Delete
                                         </button>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                        </table>
-                        <div class="flex justify-between items-center mt-4">
-                            <div class="text-gray-700">Rows per page: 
+                                    </div>
+                                </div>
+                            <?php $no++; endwhile; ?>
+                        </div>
+                        
+                        <div class="flex flex-col md:flex-row justify-between items-center mt-4 text-sm">
+                            <div class="text-gray-700 mb-2 md:mb-0">
+                                <span class="mr-2">Rows per page:</span>
                                 <select class="border border-gray-300 rounded-md p-1">
                                     <option>10</option>
                                     <option>20</option>
                                     <option>30</option>
                                 </select>
                             </div>
-                            <div class="text-gray-700">1-10 of 50 items 
-                                <button class="ml-2"><i class="fas fa-chevron-left"></i></button>
-                                <button class="ml-2"><i class="fas fa-chevron-right"></i></button>
+                            <div class="text-gray-700 flex items-center">
+                                <span>1-10 of 50 items</span>
+                                <button class="ml-2 p-1"><i class="fas fa-chevron-left"></i></button>
+                                <button class="ml-2 p-1"><i class="fas fa-chevron-right"></i></button>
                             </div>
                         </div>
                     </div>
                 </section>
-
-                <section>
-                    
-                </section>
             </main>
         </div>  
+
         <script>
         const sidebar = document.getElementById('sidebar');
         const menuButton = document.getElementById('menuButton');
@@ -223,24 +332,36 @@ $no = 1;
 
         // Sidebar
         menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('hidden');
-                });
+            sidebar.classList.toggle('hidden');
+        });
 
-                closeSidebar.addEventListener('click', () => {
-                    sidebar.classList.add('hidden');
-                });
+        closeSidebar.addEventListener('click', () => {
+            sidebar.classList.add('hidden');
+        });
 
-        // Toggle dropdown filter
+        // Toggle dropdown filter (Desktop)
+        const filterButtonDesktop = document.getElementById('filterButtonDesktop');
+        const filterDropdownDesktop = document.getElementById('filterDropdownDesktop');
+
+        filterButtonDesktop.addEventListener('click', (e) => {
+            e.stopPropagation();
+            filterDropdownDesktop.classList.toggle('hidden');
+        });
+
+        // Toggle dropdown filter (Mobile)
         const filterButton = document.getElementById('filterButton');
         const filterDropdown = document.getElementById('filterDropdown');
 
-            filterButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Mencegah event bubbling
+        filterButton.addEventListener('click', (e) => {
+            e.stopPropagation();
             filterDropdown.classList.toggle('hidden');
         });
 
-        // Close dropdown when clicking outside
+        // Close dropdowns when clicking outside
         document.addEventListener('click', (event) => {
+            if (!filterButtonDesktop.contains(event.target) && !filterDropdownDesktop.contains(event.target)) {
+                filterDropdownDesktop.classList.add('hidden');
+            }
             if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
                 filterDropdown.classList.add('hidden');
             }
@@ -248,58 +369,89 @@ $no = 1;
 
         // Function to filter table based on jabatan and search input
         function filterTable() {
-            const filterBPH = document.getElementById('filterBPH').checked;
-            const filterAnggota = document.getElementById('filterAnggota').checked;
-            const searchText = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('tbody tr');
-
-            rows.forEach(row => {
-                const jabatan = row.getAttribute('data-jabatan').toLowerCase(); // Ambil jabatan dari atribut data-jabatan
-                
-                // Check if row matches the selected jabatan filter
-                const isBPH = 
-                    jabatan === 'ketua' ||
-                    jabatan === 'wakil' ||
-                    jabatan === 'bendahara' ||
-                    jabatan === 'sekretaris';
-
-                const matchesJabatan = 
-                    (filterBPH && isBPH) || // Jika BPH dipilih, tampilkan Ketua, Wakil, Bendahara, Sekretaris
-                    (filterAnggota && jabatan === 'anggota') || // Jika Anggota dipilih, tampilkan Anggota
-                    (!filterBPH && !filterAnggota); // Tampilkan semua jika tidak ada filter yang dipilih
-
-                // Check if row matches the search text
-                const nama = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-                const nim = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-                const email = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
-                
-                const matchesSearch = 
-                    nama.includes(searchText) ||
-                    nim.includes(searchText) ||
-                    email.includes(searchText) ||
-                    jabatan.includes(searchText);
-
-                // Show row only if it matches both filter and search criteria
-                row.style.display = (matchesJabatan && matchesSearch) ? '' : 'none';
+            // Get all filter values
+            const filterBPH = document.getElementById('filterBPH').checked || document.getElementById('filterBPHDesktop').checked;
+            const filterAnggota = document.getElementById('filterAnggota').checked || document.getElementById('filterAnggotaDesktop').checked;
+            const searchText = (document.getElementById('searchInput').value || document.getElementById('searchInputMobile').value).toLowerCase();
+            
+            // Filter desktop table rows
+            const desktopRows = document.querySelectorAll('.desktop-view-table tbody tr');
+            desktopRows.forEach(row => {
+                filterRow(row, filterBPH, filterAnggota, searchText);
+            });
+            
+            // Filter mobile cards
+            const mobileCards = document.querySelectorAll('.mobile-view-card > div');
+            mobileCards.forEach(card => {
+                filterRow(card, filterBPH, filterAnggota, searchText);
             });
         }
 
-        // Event listeners for filter checkboxes
-        document.getElementById('filterBPH').addEventListener('change', filterTable);
-        document.getElementById('filterAnggota').addEventListener('change', filterTable);
+        function filterRow(row, filterBPH, filterAnggota, searchText) {
+            const jabatan = row.getAttribute('data-jabatan').toLowerCase();
+            
+            // Check if row matches the selected jabatan filter
+            const isBPH = 
+                jabatan === 'ketua' ||
+                jabatan === 'wakil' ||
+                jabatan === 'bendahara' ||
+                jabatan === 'sekretaris';
 
-        // Event listener for Enter key in search input
+            const matchesJabatan = 
+                (filterBPH && isBPH) || // Jika BPH dipilih, tampilkan Ketua, Wakil, Bendahara, Sekretaris
+                (filterAnggota && jabatan === 'anggota') || // Jika Anggota dipilih, tampilkan Anggota
+                (!filterBPH && !filterAnggota); // Tampilkan semua jika tidak ada filter yang dipilih
+
+            // Check if row matches the search text
+            const rowText = row.textContent.toLowerCase();
+            const matchesSearch = rowText.includes(searchText);
+
+            // Show row only if it matches both filter and search criteria
+            row.style.display = (matchesJabatan && matchesSearch) ? '' : 'none';
+        }
+
+        // Sync desktop and mobile filter checkboxes
+        document.getElementById('filterBPH').addEventListener('change', function() {
+            document.getElementById('filterBPHDesktop').checked = this.checked;
+            filterTable();
+        });
+
+        document.getElementById('filterBPHDesktop').addEventListener('change', function() {
+            document.getElementById('filterBPH').checked = this.checked;
+            filterTable();
+        });
+
+        document.getElementById('filterAnggota').addEventListener('change', function() {
+            document.getElementById('filterAnggotaDesktop').checked = this.checked;
+            filterTable();
+        });
+
+        document.getElementById('filterAnggotaDesktop').addEventListener('change', function() {
+            document.getElementById('filterAnggota').checked = this.checked;
+            filterTable();
+        });
+
+        // Event listeners for search inputs
         document.getElementById('searchInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                filterTable(); // Jalankan pencarian saat Enter ditekan
+                filterTable();
             }
         });
 
-        // Event listener for search icon click
-        document.getElementById('searchIcon').addEventListener('click', () => {
-            filterTable(); // Jalankan pencarian saat ikon search diklik
+        document.getElementById('searchInputMobile').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterTable();
+            }
         });
 
+        // Event listener for search icon clicks
+        document.getElementById('searchIcon').addEventListener('click', () => {
+            filterTable();
+        });
+
+        document.getElementById('searchIconMobile').addEventListener('click', () => {
+            filterTable();
+        });
 
         // Delete User
         function confirmDelete(userId) {
@@ -314,8 +466,22 @@ $no = 1;
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Jika user menekan "Yakin", kirim request penghapusan ke server
-                    window.location.href = `../api/delete_user.php?id=${userId}`;
+                    // Kirim request penghapusan ke server
+                    fetch(`../api/delete_user.php?id=${userId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('Sukses!', data.message, 'success').then(() => {
+                                    // Redirect ke halaman anggota.php setelah SweetAlert ditutup
+                                    window.location.href = '../admin/anggota.php';
+                                });
+                            } else {
+                                Swal.fire('Gagal!', data.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire('Error!', 'Terjadi kesalahan saat menghapus pengguna', 'error');
+                        });
                 }
             });
         }
