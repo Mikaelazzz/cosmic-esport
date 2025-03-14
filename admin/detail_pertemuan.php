@@ -118,7 +118,7 @@ $statusSesi = $resultStatus->fetchArray(SQLITE3_ASSOC)['status'];
     <main class="flex-1 overflow-y-auto p-6">
         <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
             <!-- Judul Pertemuan -->
-            <h2 class="text-2xl font-bold mb-4">Pertemuan Rutin - <?php echo htmlspecialchars($pertemuan['id']); ?> [<?php echo htmlspecialchars($pertemuan['nama_topik']); ?>]</h2>
+            <h2 class="text-2xl font-bold mb-4">Pertemuan Rutin - <?php echo htmlspecialchars($pertemuan['id'] . ' ' . $pertemuan['nama_topik'] . ''); ?></h2>
 
             <!-- Informasi Acara -->
             <div class="mb-6">
@@ -347,68 +347,68 @@ setInterval(pollAttendanceStats, 2500);
 document.addEventListener('DOMContentLoaded', pollAttendanceStats);
 
 
-    if (presensiQR) {
-        presensiQR.addEventListener('click', () => {
-            const pertemuanId = <?php echo $id_pertemuan; ?>; // Ambil ID pertemuan dari PHP
+if (presensiQR) {
+    presensiQR.addEventListener('click', () => {
+        const pertemuanId = <?php echo $id_pertemuan; ?>; // Ambil ID pertemuan dari PHP
 
-            // Tampilkan modal dengan SweetAlert2
-            Swal.fire({
-                title: 'Scan QR untuk Presensi',
-                html: `
-                    <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-                        <div id="qrcode"></div>
-                    </div>
-                `, // Tempat untuk menampilkan QR
-                showConfirmButton: false,
-                didOpen: () => {
-                    const qrCodeElement = document.getElementById('qrcode');
+        // Tampilkan modal dengan SweetAlert2
+        Swal.fire({
+            title: 'Scan QR untuk Presensi',
+            html: `
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                    <div id="qrcode"></div>
+                </div>
+            `, // Tempat untuk menampilkan QR
+            showConfirmButton: false,
+            didOpen: () => {
+                const qrCodeElement = document.getElementById('qrcode');
 
-                    // Fungsi untuk menghasilkan QR Code
-                    const generateQRCode = () => {
-                        const timestamp = Date.now(); // Tambahkan timestamp untuk membuat data unik
-                        const qrData = `presensi:${pertemuanId}:${timestamp}`; // Data yang akan dienkripsi ke dalam QR
+                // Fungsi untuk menghasilkan QR Code
+                const generateQRCode = () => {
+                    const timestamp = Date.now(); // Tambahkan timestamp untuk membuat data unik
+                    const qrData = `presensi:${pertemuanId}:${timestamp}`; // Data yang akan dienkripsi ke dalam QR
 
-                        // Hapus QR Code lama
-                        qrCodeElement.innerHTML = '';
+                    // Hapus QR Code lama
+                    qrCodeElement.innerHTML = '';
 
-                        // Generate QR Code baru
-                        new QRCode(qrCodeElement, {
-                            text: qrData,
-                            width: 200,
-                            height: 200
-                        });
+                    // Generate QR Code baru
+                    new QRCode(qrCodeElement, {
+                        text: qrData,
+                        width: 200,
+                        height: 200
+                    });
 
-                        // Kirim data QR yang baru ke server
-                        fetch('../api/update_qr.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                pertemuan_id: pertemuanId,
-                                timestamp: timestamp
-                            })
+                    // Kirim data QR yang baru ke server
+                    fetch('../api/update_qr.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            pertemuan_id: pertemuanId,
+                            timestamp: timestamp
                         })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (!data.success) {
-                                console.error('Gagal memperbarui kode QR di server.');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
-                    };
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            console.error('Gagal memperbarui kode QR di server.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                };
 
-                    // Generate QR Code pertama kali
-                    generateQRCode();
+                // Generate QR Code pertama kali
+                generateQRCode();
 
-                    // Update QR Code setiap 5 detik
-                    setInterval(generateQRCode, 5000); // 5 detik
-                }
-            });
+                // Update QR Code setiap 5 detik
+                setInterval(generateQRCode, 5000); // 5 detik
+            }
         });
-    }
+    });
+}
 
     // Event listener untuk memproses data QR code
     const processQRCode = (qrData) => {

@@ -87,6 +87,9 @@ $resultAnggota = $stmtAnggota->execute();
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body style="font-family: 'Poppins';">
 <section class="bg-gray-100 font-poppins h-screen flex flex-col">
@@ -118,6 +121,9 @@ $resultAnggota = $stmtAnggota->execute();
                 <p class="text-gray-700"><strong>Hadir:</strong> <span class="persentase-hadir"><?php echo $persentase_hadir; ?></span>%</p>
                 <p class="text-gray-700"><strong>Alpha:</strong> <span class="persentase-alpha"><?php echo $persentase_alpha; ?></span>%</p>
             </div>
+            <button id="downloadPdf" class="bg-red-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-red-700 transition">
+                <i class="fas fa-download mr-2"></i> Download PDF
+            </button>
 
             <!-- Daftar Anggota -->
             <div class="mb-6">
@@ -156,5 +162,76 @@ $resultAnggota = $stmtAnggota->execute();
         </div>
     </main>
 </section>
+
+<script>
+document.getElementById('downloadPdf').addEventListener('click', function() {
+    // Inisialisasi jsPDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // Judul PDF
+    const title = "Detail Pertemuan - Cosmic Esport";
+    doc.setFontSize(18);
+    doc.text(title, 15, 20);
+
+    // Informasi Pertemuan
+    const pertemuanInfo = [
+        `Acara: ${document.querySelector('p:nth-child(1)').innerText}`,
+        `Ruangan: ${document.querySelector('p:nth-child(2)').innerText}`,
+        `Jumlah Anggota Hadir: ${document.querySelector('.jumlah-hadir').innerText}`,
+        `Hadir: ${document.querySelector('.persentase-hadir').innerText}%`,
+        `Alpha: ${document.querySelector('.persentase-alpha').innerText}%`
+    ];
+    doc.setFontSize(12);
+    pertemuanInfo.forEach((info, index) => {
+        doc.text(info, 15, 40 + (index * 10));
+    });
+
+    // Data Tabel Anggota
+    const table = document.querySelector('table');
+    const headers = [];
+    const rows = [];
+
+    // Ambil header tabel
+    table.querySelectorAll('thead th').forEach(th => {
+        headers.push(th.innerText);
+    });
+
+    // Ambil baris data tabel
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => {
+            row.push(td.innerText);
+        });
+        rows.push(row);
+    });
+
+    // Tambahkan tabel ke PDF menggunakan autoTable
+    doc.autoTable({
+        head: [headers],
+        body: rows,
+        startY: 90, // Posisi awal tabel
+        theme: 'grid', // Gaya tabel
+        styles: { 
+            fontSize: 10, // Ukuran font
+            halign: 'center', // Rata tengah untuk semua teks di tabel
+            cellPadding: 3 // Padding sel
+        },
+        headStyles: { 
+            fillColor: [114, 125, 182], // Warna header
+            halign: 'center' // Rata tengah untuk teks header
+        },
+        columnStyles: {
+            0: { halign: 'center' }, // Kolom No (rata tengah)
+            1: { halign: 'left' }, // Kolom Nama (rata tengah)
+            2: { halign: 'center' }, // Kolom NIM (rata tengah)
+            3: { halign: 'center' }  // Kolom Status (rata tengah)
+        }
+    });
+
+    // Simpan PDF
+    doc.save('detail_pertemuan.pdf');
+});
+</script>
 </body>
 </html>
