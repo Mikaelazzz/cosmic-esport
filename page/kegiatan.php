@@ -31,6 +31,30 @@ $totalPages = ceil($totalData / $limit);
 // Query untuk mengambil data kegiatan dengan pagination
 $query = "SELECT id, nama_kegiatan, gambar FROM kegiatan LIMIT $limit OFFSET $offset";
 $result = $db->query($query);
+
+// Ambil kata kunci pencarian dari URL
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+
+// Query untuk menghitung total data dengan filter pencarian
+$totalQuery = "SELECT COUNT(*) as total FROM kegiatan";
+if (!empty($search)) {
+    $totalQuery .= " WHERE nama_kegiatan LIKE '%$search%'";
+}
+$totalResult = $db->query($totalQuery);
+$totalRow = $totalResult->fetchArray(SQLITE3_ASSOC);
+$totalData = $totalRow['total'];
+
+// Query untuk mengambil data kegiatan dengan pagination dan filter pencarian
+$query = "SELECT id, nama_kegiatan, gambar FROM kegiatan";
+if (!empty($search)) {
+    $query .= " WHERE nama_kegiatan LIKE '%$search%'";
+}
+$query .= " LIMIT $limit OFFSET $offset";
+$result = $db->query($query);
+
+// Cek apakah ada data yang ditemukan
+$hasData = $result->fetchArray(SQLITE3_ASSOC) !== false;
+$result->reset(); // Reset pointer hasil query untuk digunakan kembali
 ?>
 
 <!DOCTYPE html>
@@ -73,6 +97,12 @@ $result = $db->query($query);
                             </a>
                         </li>
                         <li>
+                            <a href="../page/pertemuan.php" class="flex items-center p-2 hover:bg-slate-600 rounded">
+                                <i class="fa-solid fa-calendar mr-2"></i>
+                                Pertemuan
+                            </a>
+                        </li>
+                        <li>
                             <a href="../page/anggota.php" class="flex items-center p-2 hover:bg-slate-600 rounded">
                                 <i class="fa-solid fa-users mr-2"></i>
                                 Anggota UKM
@@ -110,7 +140,7 @@ $result = $db->query($query);
                 <h1 class="text-3xl font-bold">COSMIC ESPORT</h1>
                 <!-- Profile Image -->
                 <a href="profil.php" class="w-16 h-16 rounded-full overflow-hidden">
-                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/1.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
+                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/default.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
                 </a>
             </header>
 
@@ -120,20 +150,20 @@ $result = $db->query($query);
 
 
 <section class="p-6 bg-gray-100 min-h-full">
-        <!-- Header with Search -->
         <!-- Bagian Search -->
         <div class="sticky top-0 bg-gray-100 py-4 z-10">
             <div class="max-w-8xl">
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        placeholder="Search.." 
-                        class="w-full pl-4 pr-10 py-2 rounded-full bg-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                    <button class="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <i class="fas fa-search text-gray-500"></i>
-                    </button>
-                </div>
+            <div class="relative">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search.." 
+                    class="w-full p-2 rounded-2xl bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                <button id="searchButton" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <i class="fas fa-search text-gray-500"></i>
+                </button>
+            </div>
             </div>
         </div>
 
@@ -144,28 +174,37 @@ $result = $db->query($query);
 
         <!-- Grid of Activity Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-            <?php while ($row = $result->fetchArray(SQLITE3_ASSOC)): ?>
-                <a href="../page/detail_kegiatan.php?id=<?php echo htmlspecialchars($row['id']); ?>">
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <!-- Gambar Kegiatan -->
-                        <div class="bg-gray-200 h-[237px] w-full flex items-center justify-center overflow-hidden">
-                            <?php if (!empty($row['gambar'])): ?>
-                                <img 
-                                    src="<?php echo htmlspecialchars($row['gambar']); ?>" 
-                                    alt="<?php echo htmlspecialchars($row['nama_kegiatan']); ?>" 
-                                    class="w-full h-full object-cover"
-                                >
-                            <?php else: ?>
-                                <span class="text-gray-600">No Image</span>
-                            <?php endif; ?>
+            <?php if ($hasData): ?>
+                <?php while ($row = $result->fetchArray(SQLITE3_ASSOC)): ?>
+                    <a href="../page/detail_kegiatan.php?id=<?php echo htmlspecialchars($row['id']); ?>">
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                            <!-- Gambar Kegiatan -->
+                            <div class="bg-gray-200 h-[237px] w-full flex items-center justify-center overflow-hidden">
+                                <?php if (!empty($row['gambar'])): ?>
+                                    <img 
+                                        src="<?php echo htmlspecialchars($row['gambar']); ?>" 
+                                        alt="<?php echo htmlspecialchars($row['nama_kegiatan']); ?>" 
+                                        class="w-full h-full object-cover"
+                                    >
+                                <?php else: ?>
+                                    <span class="text-gray-600">No Image</span>
+                                <?php endif; ?>
+                            </div>
+                            <!-- Nama Kegiatan -->
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold"><?php echo htmlspecialchars($row['nama_kegiatan']); ?></h3>
+                            </div>
                         </div>
-                        <!-- Nama Kegiatan -->
-                        <div class="p-4">
-                            <h3 class="text-lg font-semibold"><?php echo htmlspecialchars($row['nama_kegiatan']); ?></h3>
-                        </div>
-                    </div>
-                </a>
-            <?php endwhile; ?>
+                    </a>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <!-- Tampilkan pesan jika tidak ada data -->
+                <div class="col-span-full text-center py-10">
+                <p class="text-gray-600 text-lg">
+                    Kegiatan <span class="font-bold text-slate-600"><?php echo htmlspecialchars($search); ?></span> yang anda cari tidak ditemukan.
+                </p>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Pagination -->
@@ -210,6 +249,31 @@ $result = $db->query($query);
             modeIcon.classList.toggle('rotate-180');
         });
 
+        // Search
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+
+        // Fungsi untuk melakukan pencarian
+        function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                window.location.href = `?search=${encodeURIComponent(searchTerm)}&page=1`;
+            } else {
+                window.location.href = `?page=1`; // Jika search kosong, kembali ke halaman 1
+            }
+        }
+
+        // Event listener untuk tombol Enter pada input search
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Event listener untuk tombol search
+        searchButton.addEventListener('click', () => {
+            performSearch();
+        });
     </script>
     </body>
 </html>

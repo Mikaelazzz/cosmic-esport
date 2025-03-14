@@ -152,6 +152,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .avatar {
             width: 150px;
@@ -298,7 +300,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             <!-- Avatar section with camera icon, first on mobile (order-1) and second on desktop (md:order-2) -->
             <div class="text-center order-1 md:order-2">
                 <div class="avatar">
-                    <img id="avatarPreview" class="avatar-preview" src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/1.png'; ?>" alt="Avatar">
+                    <img id="avatarPreview" class="avatar-preview" src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/default.png'; ?>" alt="Avatar">
                     <input type="file" id="avatarInput" accept="image/*">
                     <span class="camera-icon"><i class="fas fa-camera"></i></span>
                 </div>
@@ -313,6 +315,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 <input type="text" id="nim" name="nim" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" value="<?php echo htmlspecialchars($user['nim']); ?>">
                 <label class="block font-bold mt-2">EMAIL</label>
                 <input type="email" id="email" name="email" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" value="<?php echo htmlspecialchars($user['email']); ?>" readonly>
+                <!-- Tambahkan baris ini untuk menampilkan token dan tombol download -->
+                <label class="block font-bold mt-2">TOKEN</label>
+                <div class="flex items-center">
+                    <input type="text" id="token" name="token" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" value="<?php echo htmlspecialchars($user['token']); ?>" readonly>
+                </div>
+                <div class="mb-4">
+                    <button id="downloadToken" class="text-white py-2 px-4 rounded-md" style="background-color: #727DB6;">Download</button>
+                    <button id="regenerateToken" class="ml-2 text-white py-2 px-4 rounded-md" style="background-color: #727DB6;">Regenerate</button>
+                </div>
                 <label class="block font-bold mt-2">Bergabung pada</label>
                 <input type="text" id="created" name="created" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" value="<?php echo htmlspecialchars($user['created']); ?>" readonly>
             </div>
@@ -357,57 +368,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         </div>
     </div>
 
-    <!-- Popup Notification for General Update -->
-    <div id="successPopup" class="popup">
-        <div class="popup-content">
-            <div class="checkmark"></div>
-            <h2 class="text-xl font-bold text-gray-700 mb-2">Berhasil</h2>
-            <p class="text-gray-600 mb-4">Anda berhasil memperbarui Data</p>
-            <button id="closePopup" class=" text-white py-2 px-4 rounded-md" style="background-color: #727DB6;">OK</button>
-        </div>
-    </div>
-
-    <!-- Popup Notification for Password Update -->
-    <div id="passwordPopup" class="popup">
-        <div class="popup-content">
-            <div class="checkmark"></div>
-            <h2 class="text-xl font-bold text-gray-700 mb-2">Berhasil</h2>
-            <p class="text-gray-600 mb-4">Password telah diperbarui</p>
-            <button id="closePasswordPopup" class=" text-white py-2 px-4 rounded-md" style="background-color: #727DB6;">OK</button>
-        </div>
-    </div>
-
-    <!-- Popup Notification for Cancel Confirmation -->
-    <div id="cancelPopup" class="popup">
-        <div class="popup-content">
-            <div class="question-mark"></div>
-            <h2 class="text-xl font-bold text-gray-700 mb-2">Konfirmasi</h2>
-            <p class="text-gray-600 mb-4">Data anda belum di simpan</p>
-            <div class="flex justify-center gap-4">
-                <button id="discardData" class="bg-red-600 text-white py-2 px-4 rounded-md">Discard Data</button>
-                <button id="goBack" class=" text-white py-2 px-4 rounded-md" style="background-color: #727DB6;">Kembali</button>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Popup Notification for Error -->
-    <div id="errorPopup" class="popup">
-        <div class="popup-content">
-            <div class="question-mark"></div>
-            <h2 class="text-xl font-bold text-gray-700 mb-2">Error</h2>
-            <p id="errorMessage" class="text-gray-600 mb-4"></p>
-            <button id="closeErrorPopup" class="text-white py-2 px-4 rounded-md" style="background-color: #727DB6;">OK</button>
-        </div>
-    </div>
 
     <script>
 $(document).ready(function() {
-    // Ensure all popups are hidden on page load
-    $('#successPopup').hide();
-    $('#passwordPopup').hide();
-    $('#cancelPopup').hide();
-    $('#errorPopup').hide();
+
 
     // Close Button History
     // Get the close button (now an <a> element with id="closeButton")
@@ -422,7 +386,7 @@ $(document).ready(function() {
     const defaultData = {
     nama_lengkap: "<?php echo htmlspecialchars($user['nama_lengkap']); ?>",
     nim: "<?php echo htmlspecialchars($user['nim']); ?>",
-    profile_image: "<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/1.png'; ?>"
+    profile_image: "<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/default.png'; ?>"
     };
 
     // Fungsi untuk mengembalikan nilai ke default
@@ -433,6 +397,92 @@ $(document).ready(function() {
     $('.avatar').css('background-color', 'transparent'); // Reset latar belakang avatar
     $('#avatarInput').val(''); // Reset input file
 }
+
+
+    // Fungsi untuk menangani download token
+    $('#downloadToken').click(function() {
+        const token = $('#token').val();
+        if (token) {
+            const blob = new Blob([token], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'token_ukm.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Tampilkan SweetAlert sukses
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Token berhasil diunduh!',
+                confirmButtonColor: '#727DB6',
+            });
+        } else {
+            // Tampilkan SweetAlert error
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Token tidak tersedia.',
+                confirmButtonColor: '#727DB6',
+            });
+        }
+    });
+
+    $('#regenerateToken').click(function() {
+        Swal.fire({
+            title: 'Regenerate Token',
+            text: 'Apakah Anda yakin ingin mengenerate ulang token? Token lama akan dihapus.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#727DB6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Generate Ulang',
+            cancelButtonText: 'Batal',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '../api/regenerate_token.php', // Endpoint untuk regenerate token
+                    method: 'POST',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status === 'success') {
+                            $('#token').val(data.token); // Update token di halaman
+
+                            // Tampilkan SweetAlert sukses
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: 'Token berhasil digenerate ulang: ' + data.token,
+                                confirmButtonColor: '#727DB6',
+                            });
+                        } else {
+                            // Tampilkan SweetAlert error
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Gagal mengenerate ulang token.',
+                                confirmButtonColor: '#727DB6',
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+
+                        // Tampilkan SweetAlert error
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Terjadi kesalahan saat mengenerate ulang token.',
+                            confirmButtonColor: '#727DB6',
+                        });
+                    }
+                });
+            }
+        });
+    });
 
     // Toggle password change fields, submit button, and buttons
     $('#togglePasswordChange').click(function() {
@@ -447,71 +497,88 @@ $(document).ready(function() {
         }
     });
 
-    // Show cancel confirmation popup when Cancel button is clicked
-    $('#cancelButton').click(function() {
-        $('#cancelPopup').fadeIn(500).addClass('animate-fade-in');
-    });
-
-    // Handle Cancel Popup actions
-    $('#discardData').click(function() {
-        resetToDefault()
-        window.location.href = '../page/index.php';
-        $('#passwordFields').addClass('hidden');
-        $('#passwordButtons').addClass('hidden');
-        $('#togglePasswordChange').text('Change Password');
-        $('#cancelPopup').fadeOut(500, function() {
-            $(this).removeClass('animate-fade-in');
-        });
-    });
-
-    $('#goBack').click(function() {
-        $('#cancelPopup').fadeOut(500, function() {
-            $(this).removeClass('animate-fade-in');
-        });
-    });
-
+    // Save Button
     $('#saveButton').click(function() {
-            const nama_lengkap = $('#nama_lengkap').val();
-            const nim = $('#nim').val();
-            const profile_image = $('#avatarInput')[0].files[0];
+        const nama_lengkap = $('#nama_lengkap').val();
+        const nim = $('#nim').val();
+        const profile_image = $('#avatarInput')[0].files[0];
 
-            // Validate NIM: Must be 9-10 digits
-            const nimPattern = /^\d{9,10}$/;
-            if (!nimPattern.test(nim)) {
-                showErrorPopup('NIM must be 9-10 digits.');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('nama_lengkap', nama_lengkap);
-            formData.append('nim', nim);
-            if (profile_image) {
-                formData.append('profile_image', profile_image);
-            }
-
-            $.ajax({
-                url: 'profil.php',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                dataType: 'json', // Explicitly expect JSON
-                success: function(data) { // Response is already parsed
-                    if (data.status === 'success') {
-                        $('#successPopup').fadeIn(500).addClass('animate-fade-in');
-                        setTimeout(function() {
-                            window.location.href = '../page/index.php'; // Redirect on success
-                        }, 2000);
-                    } else {
-                        showErrorPopup(data.message); // Show error message from server
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error saving data:', error);
-                    showErrorPopup('Failed to save data: ' + error);
-                }
+        // Validasi NIM
+        const nimPattern = /^\d{9,10}$/;
+        if (!nimPattern.test(nim)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'NIM harus 9-10 digit.',
+                confirmButtonColor: '#727DB6',
             });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('nama_lengkap', nama_lengkap);
+        formData.append('nim', nim);
+        if (profile_image) {
+            formData.append('profile_image', profile_image);
+        }
+
+        $.ajax({
+            url: 'profil.php',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(data) {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Profil berhasil diperbarui!',
+                        confirmButtonColor: '#727DB6',
+                    }).then(() => {
+                        window.location.href = '../page/index.php'; // Redirect setelah sukses
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message,
+                        confirmButtonColor: '#727DB6',
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Terjadi kesalahan saat menyimpan data.',
+                    confirmButtonColor: '#727DB6',
+                });
+            }
         });
+    });
+
+
+    // Cancel Button
+    $('#cancelButton').click(function() {
+        Swal.fire({
+            title: 'Konfirmasi',
+            text: 'Data Anda belum disimpan. Apakah Anda yakin ingin membatalkan?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#727DB6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Batalkan',
+            cancelButtonText: 'Kembali',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                resetToDefault(); // Reset form ke nilai default
+                window.location.href = '../page/index.php'; // Redirect ke halaman admin
+            }
+        });
+    });
 
     // Real-time password validation
     $('#new_password').on('input', function() {
@@ -546,25 +613,39 @@ $(document).ready(function() {
         }
     });
 
-    // Update submitPassword to include validation
     $('#submitPassword').click(function() {
         const new_password = $('#new_password').val();
         const confirm_password = $('#confirm_password').val();
 
         if (!new_password || !confirm_password) {
-            showErrorPopup('Both password fields are required.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Kedua kolom password harus diisi.',
+                confirmButtonColor: '#727DB6',
+            });
             return;
         }
         if (new_password !== confirm_password) {
-            showErrorPopup('Passwords do not match.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Password tidak cocok.',
+                confirmButtonColor: '#727DB6',
+            });
             return;
         }
 
-        // Additional validation for requirements
+        // Validasi tambahan (huruf kapital dan angka)
         const hasCapital = /[A-Z]/.test(new_password);
         const hasNumber = /\d/.test(new_password);
         if (!hasCapital || !hasNumber) {
-            showErrorPopup('Password must contain at least 1 capital letter and 1 number.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Password harus mengandung minimal 1 huruf kapital dan 1 angka.',
+                confirmButtonColor: '#727DB6',
+            });
             return;
         }
 
@@ -578,25 +659,35 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(data) {
                 if (data.status === 'success') {
-                    $('#passwordPopup').fadeIn(500).addClass('animate-fade-in');
-                    $('#new_password').val(''); // Clear fields
-                    $('#confirm_password').val('');
-                    // Reset requirements to initial state
-                    $('#capitalRequirement')
-                        .removeClass('text-green-700')
-                        .addClass('text-red-700')
-                        .html('<i class="fas fa-exclamation-circle"></i> Minimal 1 huruf kapital');
-                    $('#numberRequirement')
-                        .removeClass('text-green-700')
-                        .addClass('text-red-700')
-                        .html('<i class="fas fa-exclamation-circle"></i> Minimal 1 angka');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Password berhasil diganti!',
+                        confirmButtonColor: '#727DB6',
+                    }).then(() => {
+                        $('#new_password').val(''); // Clear fields
+                        $('#confirm_password').val('');
+                        $('#passwordFields').addClass('hidden');
+                        $('#passwordButtons').addClass('hidden');
+                        $('#togglePasswordChange').text('Change Password');
+                    });
                 } else {
-                    showErrorPopup(data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message,
+                        confirmButtonColor: '#727DB6',
+                    });
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Error updating password:', error);
-                showErrorPopup('Failed to update password: ' + error);
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Terjadi kesalahan saat mengganti password.',
+                    confirmButtonColor: '#727DB6',
+                });
             }
         });
     });
@@ -626,35 +717,6 @@ $(document).ready(function() {
         }
     });
 
-    // Close general update popup when OK is clicked
-    $('#closePopup').click(function() {
-        $('#successPopup').fadeOut(500, function() {
-            $(this).removeClass('animate-fade-in');
-        });
-    });
-
-    // Close password update popup when OK is clicked
-    $('#closePasswordPopup').click(function() {
-        $('#passwordPopup').fadeOut(500, function() {
-            $(this).removeClass('animate-fade-in');
-            window.location.href = '../page/index.php';
-        });
-    });
-
-    // Fungsi untuk menampilkan popup error
-    function showErrorPopup(message) {
-        $('#errorMessage').text(message); // Set pesan error
-        $('#errorPopup').fadeIn(500).addClass('animate-fade-in');
-    }
-
-    // Fungsi untuk menutup popup error
-    $('#closeErrorPopup').click(function() {
-        $('#errorPopup').fadeOut(500, function() {
-            $(this).removeClass('animate-fade-in');
-        });
-    });
-
-    
 
     // Handle avatar image upload
     $('#avatarInput').change(function(e) {
@@ -678,23 +740,60 @@ $(document).ready(function() {
 
     // Remove avatar functionality
     $('button:contains("Remove Avatar")').click(function() {
-        $('#avatarPreview').attr('src', '../src/default.png').show();
-        $('.avatar').css('background-color', 'transparent');
-        $('#avatarInput').val('');
+        Swal.fire({
+            title: 'Reset Foto Profil',
+            text: 'Apakah Anda yakin ingin mereset foto profil?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#727DB6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Reset',
+            cancelButtonText: 'Batal',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '../api/remove_avatar.php',
+                    method: 'POST',
+                    data: { remove_avatar: true },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            // Update tampilan avatar
+                            $('#avatarPreview').attr('src', '../src/default.png').show();
+                            $('.avatar').css('background-color', 'transparent');
+                            $('#avatarInput').val('');
 
-        $.ajax({
-            url: '../api/remove_avatar.php',
-            method: 'POST',
-            data: { remove_avatar: true },
-            success: function(response) {
-                console.log('Avatar removed successfully');
-            },
-            error: function(xhr, status, error) {
-                console.error('Error removing avatar:', error);
+                            // Tampilkan SweetAlert sukses
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: 'Foto profil berhasil direset!',
+                                confirmButtonColor: '#727DB6',
+                            });
+                        } else {
+                            // Tampilkan SweetAlert error
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Gagal mereset foto profil.',
+                                confirmButtonColor: '#727DB6',
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Terjadi kesalahan saat mereset foto profil.',
+                            confirmButtonColor: '#727DB6',
+                        });
+                    }
+                });
             }
         });
-    });
-});
+    }); 
+}); 
     </script>
 </body>
 </html>
