@@ -47,7 +47,6 @@ $queryJumlahInformasi = "SELECT COUNT(*) as jumlah_informasi FROM informasi";
 $resultJumlahInformasi = $db->query($queryJumlahInformasi);
 $rowJumlahInformasi = $resultJumlahInformasi->fetchArray(SQLITE3_ASSOC);
 $jumlahInformasi = $rowJumlahInformasi['jumlah_informasi'];
-
 ?>
 
 <!DOCTYPE html>
@@ -62,6 +61,12 @@ $jumlahInformasi = $rowJumlahInformasi['jumlah_informasi'];
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .swal2-progress-bar {
+        background-color: #4CAF50 !important; /* Warna hijau */
+    }
+    </style>
 </head>
 <body>
     <section class="flex h-screen" style="font-family: 'Poppins';">
@@ -171,7 +176,7 @@ $jumlahInformasi = $rowJumlahInformasi['jumlah_informasi'];
                             <h3 class="text-xl font-bold"><?php echo htmlspecialchars($row['nama_topik']); ?></h3>
                             <p class="text-gray-600">Hari, Tanggal : <?php echo htmlspecialchars($row['hari']); ?>, <?php echo htmlspecialchars($row['tanggal']); ?></p>
                             <p class="text-gray-600">Jam : <?php echo htmlspecialchars($row['jam_pertemuan']); ?></p>
-                            <p class="text-gray-600">Ruangan : <span class="text-green-500"><?php echo htmlspecialchars($row['kelas']); ?></span></p>
+                            <p class="text-gray-600">Ruangan : <span class="text-purple-600 font-bold"><?php echo htmlspecialchars($row['kelas']); ?></span></p>
                         </a>
                     <?php endwhile; ?>
                 </div>
@@ -193,6 +198,27 @@ $jumlahInformasi = $rowJumlahInformasi['jumlah_informasi'];
                 closeSidebar.addEventListener('click', () => {
                     sidebar.classList.add('hidden');
                 });
+
+                 // Tampilkan SweetAlert2 mixin jika pengguna baru saja login
+                 <?php if (isset($_SESSION['just_logged_in'])): ?>
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        customClass: {
+                            timerProgressBar: 'swal2-progress-bar' // Gunakan class CSS khusus
+                        }
+                    });
+                    Toast.fire({
+                        icon: "success",
+                        title: "Signed in successfully"
+                    });
+
+                    // Hapus session `just_logged_in` setelah SweetAlert ditampilkan
+                    <?php unset($_SESSION['just_logged_in']); ?>
+                <?php endif; ?>
             });
         </script>
     </body>
