@@ -8,52 +8,49 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    .carousel {
-      position: relative;
-      max-width: 600px;
-      margin: auto;
-      overflow: hidden;
-    }
-    .carousel-controls {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px;
-    }
-    .carousel-control-prev, .carousel-control-next {
-      color: white;
-      border: none;
-      cursor: pointer;
-      padding: 20px;
-    }
-    .carousel-inner {
-      display: flex;
-      transition: transform 0.5s ease;
-    }
-    .carousel-item {
-      min-width: 100%;
-      box-sizing: border-box;
-    }
-    .carousel-item.active {
-      display: block;
-    }
-    .carousel-item:not(.active) {
-      display: none;
-    }
-    .carousel-indicators {
-      display: flex;
-      justify-content: center;
-      padding: 10px;
-    }
-    .carousel-indicator {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: #ccc;
-      margin: 5px;
-    }
-    .carousel-indicator.active {
-      background-color: #333;
-    }
+        .carousel {
+            position: relative;
+            max-width: 700px; /* Lebar maksimum carousel */
+            width: 100%; /* Lebar carousel relatif terhadap parent */
+            margin: 0 auto; /* Pusatkan carousel secara horizontal */
+            overflow: hidden;
+            aspect-ratio: 16 / 9; /* Aspect ratio 16:9 */
+        }
+        .carousel-inner {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 100%;
+        }
+        .carousel-item {
+            min-width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Pastikan gambar menutupi area tanpa distorsi */
+        }
+        .carousel-control-prev, .carousel-control-next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 99999%;
+        }
+        .carousel-control-prev {
+            left: 10px;
+        }
+        .carousel-control-next {
+            right: 10px;
+        }
+
 
     
   </style>
@@ -174,22 +171,38 @@
   <!-- Program Kerja -->
   <section id="proker" class="text-slate-200 pb-9" style="font-family: 'Poppins'; background-color: #727DB6;">
     <p class="text-center font-bold text-2xl py-4">PROGRAM KERJA</p>
-    <div class="carousel">
-      <div class="carousel-controls">
-        <button class="carousel-control-prev" onclick="prevSlide()">
-          <span class="carousel-control-prev-icon text-2xl hover:text-zinc-700 font-bold"><</span>
-        </button>
-        <div class="carousel-inner">
-          <img src="../src/Vincent.png" alt="Image 1" class="carousel-item active">
-          <img src="../src/logo.png" alt="Image 2" class="carousel-item">
-          <img src="../src/Vincent.png" alt="Image 3" class="carousel-item">
-        </div>
-        <button class="carousel-control-next" onclick="nextSlide()">
-          <span class="carousel-control-next-icon text-2xl hover:text-zinc-700 font-bold">></span>
-        </button>
+
+    <div class="w-full overflow-hidden py-5 h-56 max-h-96 sm:h-full sm:max-h-[60vh] relative flex justify-center items-center">
+      <!-- Slider Container -->
+      <div class="carousel relative mx-8 rounded-lg shadow-md shadow-indigo-500 " >
+          <div class="carousel-inner">
+          <div class="carousel-item w-full max-w-[300px] sm:max-w-[500px] lg:max-w-[700px]">
+                  <img src="/src/CSL.png" alt="Event Image" class="w-full h-auto object-cover">
+          </div>
+          <div class="carousel-item w-full max-w-[300px] sm:max-w-[500px] lg:max-w-[700px]">
+                  <img src="/src/Patched.png" alt="Event Image" class="w-full h-auto object-cover">
+          </div>
+          <div class="carousel-item w-full max-w-[300px] sm:max-w-[500px] lg:max-w-[700px]">
+                  <img src="/src/Challenge.png" alt="Event Image" class="w-full h-auto object-cover">
+          </div>
+          <div class="carousel-item w-full max-w-[300px] sm:max-w-[500px] lg:max-w-[700px]">
+                  <img src="/src/Quiz.png" alt="Event Image" class="w-full h-auto object-cover">
+          </div>
+          <div class="carousel-item w-full max-w-[300px] sm:max-w-[500px] lg:max-w-[700px]">
+                  <img src="/src/Nobar.png" alt="Event Image" class="w-full h-auto object-cover">
+          </div>
       </div>
+
+      <!-- Slider Controls -->
+      <!-- Slider Controls - Hidden on mobile, visible on sm and up -->
+      <button class="carousel-control-prev hidden sm:block" onclick="prevSlide()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-8 w-8 pr-1"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"></path></svg>
+      </button>
+      <button class="carousel-control-next hidden sm:block" onclick="nextSlide()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-8 w-8 pl-1"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
+      </button>
+  </div>
     </div>
-    <div class="flex justify-center mt-4" id="dots"></div>
   </section>
   
 
@@ -244,61 +257,69 @@
     <div class="text-center md:text-left">
       <h1 class="font-bold text-xl md:text-2xl lg:text-3xl">Contact</h1>
       <p class="text-lg">Whatsapp : 082112683644</p>
+      <p class="text-lg">Instagram : Cosmic.ukdc</p>
     </div>
   </div>
 </section>
 
   <script>
-    let slideIndex = 0;
-  const carouselItems = document.querySelectorAll('.carousel-item');
-  const dotsContainer = document.getElementById('dots');
+        // Slider 
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.carousel-item');
+        const totalSlides = slides.length;
+        const carouselInner = document.querySelector('.carousel-inner');
+        const carousel = document.querySelector('.carousel');
 
-  function prevSlide() {
-    slideIndex--;
-    if (slideIndex < 0) {
-      slideIndex = carouselItems.length - 1;
-    }
-    updateSlide();
-  }
+        function showSlide(index) {
+            currentSlide = index;
+            if (currentSlide < 0) {
+                currentSlide = totalSlides - 1;
+            } else if (currentSlide >= totalSlides) {
+                currentSlide = 0;
+            }
+            
+            const offset = -currentSlide * 100;
+            carouselInner.style.transform = `translateX(${offset}%)`;
+        }
 
-  function nextSlide() {
-    slideIndex++;
-    if (slideIndex >= carouselItems.length) {
-      slideIndex = 0;
-    }
-    updateSlide();
-  }
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
 
-  function updateSlide() {
-    carouselItems.forEach((item, index) => {
-      item.classList.remove('active');
-      if (index === slideIndex) {
-        item.classList.add('active');
-      }
-    });
-    const dots = [];
-    carouselItems.forEach((item, index) => {
-      const dot = document.createElement('span');
-      dot.classList.add('h-2', 'w-2', 'rounded-full', 'mx-1');
-      if (index === slideIndex) {
-        dot.classList.add('bg-slate-100');
-      } else {
-        dot.classList.add('bg-gray-400');
-      }
-      dots.push(dot);
-    });
-    dotsContainer.innerHTML = '';
-    dots.forEach((dot) => {
-      dotsContainer.appendChild(dot);
-    });
-  }
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
 
-  updateSlide();
+        // Auto slide every 8 seconds
+        setInterval(nextSlide, 8000);
 
-  // Otomatisasi slide
-  setInterval(() => {
-    nextSlide();
-  }, 3000);
+        // Initialize first slide
+        showSlide(currentSlide);
+
+        // Swipe functionality for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        carousel.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+
+        carousel.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, false);
+
+        function handleSwipe() {
+            const swipeThreshold = 50; // Minimum distance for a swipe to register
+            if (touchStartX - touchEndX > swipeThreshold) {
+                // Swipe left - next slide
+                nextSlide();
+            }
+            if (touchEndX - touchStartX > swipeThreshold) {
+                // Swipe right - previous slide
+                prevSlide();
+            }
+        }
   </script>
 </body>
 </html>
