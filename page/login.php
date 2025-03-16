@@ -29,6 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Simpan data pengguna ke session
         $_SESSION['user'] = $user;
 
+        // Set session untuk menandakan bahwa pengguna baru saja login
+        $_SESSION['just_logged_in'] = true;
+
         // Redirect berdasarkan role
         if ($user['role'] === 'admin') {
             header("Location: ../admin/index.php");
