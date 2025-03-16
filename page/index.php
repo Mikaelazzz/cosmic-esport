@@ -207,9 +207,9 @@ if (!$resultCarousel) {
         <!-- Meteor Container -->
         <div id="meteor-container" class="absolute h-full w-full" style="z-index: 1;"></div>
  
-        <!-- Slider Container -->
-        <div class="carousel relative mx-8 rounded-lg shadow-md shadow-indigo-500 " style="z-index: 10;">
-            <div class="carousel-inner">
+            <!-- Slider Container -->
+            <div class="carousel relative mx-8 rounded-lg shadow-md shadow-indigo-500 " style="z-index: 10;">
+                <div class="carousel-inner">
                 <?php while ($rowCarousel = $resultCarousel->fetchArray(SQLITE3_ASSOC)): ?>
                 <div class="carousel-item w-full max-w-[300px] sm:max-w-[500px] lg:max-w-[700px]">
                     <a class="w-full h-auto object-cover" href="<?php echo htmlspecialchars($rowCarousel['link']); ?>" target="_blank">
