@@ -128,7 +128,7 @@ $resultRiwayat = $db->query($queryRiwayat);
 
                 <section class="p-4">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-gray-700 text-xl">List Kegiatan</h2>
+                        <h2 class="text-gray-700 text-xl">List Informasi</h2>
                                 <!-- Search Input -->
                     <div class="relative">
                         <input type="text" id="searchInput" placeholder="Search User" class="border border-gray-300 rounded-md pl-4 pr-10 py-2">
