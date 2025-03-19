@@ -92,7 +92,7 @@ $db = new SQLite3('../db/ukm.db');
                 <h1 class="text-3xl font-bold">COSMIC ESPORT</h1>
                 <!-- Profile Image -->
                 <a href="profil.php" class="w-16 h-16 rounded-full overflow-hidden">
-                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/1.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
+                    <img src="<?php echo !empty($user['profile_image']) ? $user['profile_image'] : '../src/default.png'; ?>" alt="Profile Image" class="w-full h-full object-cover">
                 </a>
             </header>
 
