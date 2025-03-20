@@ -16,18 +16,28 @@ try {
 $id = $_POST['id'] ?? null;
 $nama_lengkap = $_POST['nama_lengkap'] ?? null;
 $nim = $_POST['nim'] ?? null;
+$role = $_POST['role'] ?? null;
+$jabatan = $_POST['jabatan'] ?? null;
 $profile_image = $_FILES['profile_image'] ?? null;
 
-if (!$id || !$nama_lengkap || !$nim) {
+if (!$id || !$nama_lengkap || !$nim || !$role || !$jabatan) {
     echo json_encode(['status' => 'error', 'message' => 'Invalid input']);
     exit();
 }
 
-// Update nama_lengkap dan nim
-$query = "UPDATE users SET nama_lengkap = :nama_lengkap, nim = :nim WHERE id = :id";
+// Cek apakah user yang diedit adalah dirinya sendiri
+$isEditingSelf = $id == $_SESSION['user']['id'];
+
+// Cek apakah role diubah dari admin ke anggota
+$isChangingToAnggota = $isEditingSelf && $role === 'anggota' && $_SESSION['user']['role'] === 'admin';
+
+// Update nama_lengkap, nim, role, dan jabatan
+$query = "UPDATE users SET nama_lengkap = :nama_lengkap, nim = :nim, role = :role, jabatan = :jabatan WHERE id = :id";
 $stmt = $db->prepare($query);
 $stmt->bindValue(':nama_lengkap', $nama_lengkap, SQLITE3_TEXT);
 $stmt->bindValue(':nim', $nim, SQLITE3_TEXT);
+$stmt->bindValue(':role', $role, SQLITE3_TEXT);
+$stmt->bindValue(':jabatan', $jabatan, SQLITE3_TEXT);
 $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
 
 if (!$stmt->execute()) {
@@ -54,6 +64,11 @@ if ($profile_image && $profile_image['error'] === UPLOAD_ERR_OK) {
         echo json_encode(['status' => 'error', 'message' => 'Failed to update profile image']);
         exit();
     }
+}
+
+// Jika role diubah dari admin ke anggota, update session
+if ($isChangingToAnggota) {
+    $_SESSION['user']['role'] = 'anggota';
 }
 
 echo json_encode(['status' => 'success', 'message' => 'Profile updated successfully']);
