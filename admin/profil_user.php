@@ -247,6 +247,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 </div>
                 <label class="block font-bold mt-2">Bergabung pada</label>
                 <input type="text" id="created" name="created" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" value="<?php echo htmlspecialchars($userData['created'] ?? ''); ?>" readonly>
+                <!-- Tambahkan di bawah "Bergabung Pada" -->
+                <label class="block font-bold mt-2">Role</label>
+                <select id="role" name="role" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+                    <option value="anggota" <?php echo ($userData['role'] === 'anggota') ? 'selected' : ''; ?>>Anggota</option>
+                    <option value="admin" <?php echo ($userData['role'] === 'admin') ? 'selected' : ''; ?>>BPH (Admin)</option>
+                </select>
+
+                <label class="block font-bold mt-2">Jabatan</label>
+                <select id="jabatan" name="jabatan" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+                    <?php
+                    // Tampilkan opsi jabatan berdasarkan role
+                    if ($userData['role'] === 'anggota') {
+                        echo '<option value="Anggota" selected>Anggota</option>';
+                    } else {
+                        $jabatanOptions = ['Ketua', 'Wakil', 'Sekretaris', 'Bendahara', 'Acara', 'PDD'];
+                        foreach ($jabatanOptions as $jabatan) {
+                            $selected = ($userData['jabatan'] === $jabatan) ? 'selected' : '';
+                            echo "<option value='$jabatan' $selected>$jabatan</option>";
+                        }
+                    }
+                    ?>
+                </select>
             </div>
         </div>
         
@@ -354,6 +376,29 @@ $(document).ready(function() {
     closeButton.addEventListener('click', function() {
         window.history.back(); // This navigates to the previous page in the browser history
     });
+
+    // Fungsi untuk mengubah opsi jabatan berdasarkan role
+    function updateJabatanOptions() {
+        const role = $('#role').val();
+        const jabatanSelect = $('#jabatan');
+
+        if (role === 'anggota') {
+            jabatanSelect.html('<option value="Anggota">Anggota</option>');
+        } else if (role === 'admin') {
+            const jabatanOptions = ['Ketua', 'Wakil', 'Sekretaris', 'Bendahara', 'Acara', 'PDD'];
+            let options = '';
+            jabatanOptions.forEach(jabatan => {
+                options += `<option value="${jabatan}">${jabatan}</option>`;
+            });
+            jabatanSelect.html(options);
+        }
+    }
+
+    // Panggil fungsi saat role berubah
+    $('#role').change(updateJabatanOptions);
+
+    // Panggil fungsi saat halaman dimuat
+    updateJabatanOptions();
 
     // Simpan nilai default ke dalam variabel JavaScript
     const defaultData = {
@@ -474,65 +519,114 @@ $(document).ready(function() {
     $('#saveButton').click(function() {
         const nama_lengkap = $('#nama_lengkap').val();
         const nim = $('#nim').val();
+        const role = $('#role').val();
+        const jabatan = $('#jabatan').val();
         const profile_image = $('#avatarInput')[0].files[0];
 
-        // Validasi NIM
-        const nimPattern = /^\d{9,10}$/;
-        if (!nimPattern.test(nim)) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'NIM harus 9-10 digit.',
-                confirmButtonColor: '#727DB6',
-            });
-            return;
-        }
+        // Cek apakah user yang diedit adalah dirinya sendiri
+        const isEditingSelf = "<?php echo $userId; ?>" === "<?php echo $_SESSION['user']['id']; ?>";
 
+        // Cek apakah role diubah dari admin ke anggota
+        const isChangingToAnggota = isEditingSelf && role === 'anggota' && "<?php echo $userData['role']; ?>" === 'admin';
+
+        if (isChangingToAnggota) {
+            // Tampilkan popup konfirmasi
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: 'Apakah Anda yakin ingin mengubah diri Anda menjadi anggota?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#727DB6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Ubah',
+                cancelButtonText: 'Batal',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Lanjutkan proses update
+                    updateProfile(nama_lengkap, nim, role, jabatan, profile_image, true);
+                }
+            });
+        } else {
+            // Lanjutkan proses update tanpa konfirmasi
+            updateProfile(nama_lengkap, nim, role, jabatan, profile_image, false);
+        }
+    });
+
+    // Fungsi untuk mengupdate profil
+    function updateProfile(nama_lengkap, nim, role, jabatan, profile_image, redirectAfterUpdate) {
         const formData = new FormData();
-        formData.append('id', "<?php echo $userId; ?>"); // Tambahkan ID pengguna yang akan diupdate
+        formData.append('id', "<?php echo $userId; ?>");
         formData.append('nama_lengkap', nama_lengkap);
         formData.append('nim', nim);
+        formData.append('role', role);
+        formData.append('jabatan', jabatan);
         if (profile_image) {
             formData.append('profile_image', profile_image);
         }
 
         $.ajax({
-    url: '../api/update_profile.php',
-    method: 'POST',
-    data: formData,
-    processData: false,
-    contentType: false,
-    dataType: 'json',
-    success: function(data) {
-        if (data.status === 'success') {
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil',
-                text: 'Profil berhasil diperbarui!',
-                confirmButtonColor: '#727DB6',
-            }).then(() => {
-                window.location.href = '../admin/anggota.php';
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.message || 'Terjadi kesalahan saat menyimpan data.',
-                confirmButtonColor: '#727DB6',
-            });
-        }
-    },
-    error: function(xhr, status, error) {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Terjadi kesalahan saat menyimpan data.',
-            confirmButtonColor: '#727DB6',
+            url: '../api/update_profile.php',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(data) {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Profil berhasil diperbarui!',
+                        confirmButtonColor: '#727DB6',
+                    }).then(() => {
+                        if (redirectAfterUpdate) {
+                            // Tampilkan hitung mundur 5 detik
+                            let timer = 5;
+                            const timerInterval = setInterval(() => {
+                                Swal.fire({
+                                    title: 'Anda akan dialihkan dalam...',
+                                    html: `<b>${timer}</b> detik`,
+                                    timer: 1000, // Update setiap 1 detik
+                                    timerProgressBar: true,
+                                    didOpen: () => {
+                                        Swal.showLoading();
+                                    },
+                                    willClose: () => {
+                                        clearInterval(timerInterval);
+                                    }
+                                });
+                                timer--;
+                            }, 1000);
+
+                            // Redirect ke page/index.php setelah 5 detik
+                            setTimeout(() => {
+                                window.location.href = '../page/index.php';
+                            }, 5000);
+                        } else {
+                            window.location.href = '../admin/anggota.php';
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Terjadi kesalahan saat menyimpan data.',
+                        confirmButtonColor: '#727DB6',
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Terjadi kesalahan saat menyimpan data.',
+                    confirmButtonColor: '#727DB6',
+                });
+            }
         });
     }
-});
-});
+
     // Reset Seluruh Absen pada User Profile
     $('#resetAllAttendance').click(function() {
         Swal.fire({
