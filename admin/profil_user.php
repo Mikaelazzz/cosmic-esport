@@ -7,6 +7,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 if ($user['role'] !== 'admin') {
@@ -70,7 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Form</title>
+    <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -249,26 +267,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 <input type="text" id="created" name="created" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" value="<?php echo htmlspecialchars($userData['created'] ?? ''); ?>" readonly>
                 <!-- Tambahkan di bawah "Bergabung Pada" -->
                 <label class="block font-bold mt-2">Role</label>
-                <select id="role" name="role" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
-                    <option value="anggota" <?php echo ($userData['role'] === 'anggota') ? 'selected' : ''; ?>>Anggota</option>
-                    <option value="admin" <?php echo ($userData['role'] === 'admin') ? 'selected' : ''; ?>>BPH (Admin)</option>
-                </select>
+                    <select id="role" name="role" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+                        <option value="anggota" <?php echo ($userData['role'] === 'anggota') ? 'selected' : ''; ?>>Anggota</option>
+                        <option value="admin" <?php echo ($userData['role'] === 'admin') ? 'selected' : ''; ?>>BPH (Admin)</option>
+                    </select>
 
-                <label class="block font-bold mt-2">Jabatan</label>
-                <select id="jabatan" name="jabatan" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
-                    <?php
-                    // Tampilkan opsi jabatan berdasarkan role
-                    if ($userData['role'] === 'anggota') {
-                        echo '<option value="Anggota" selected>Anggota</option>';
-                    } else {
-                        $jabatanOptions = ['Ketua', 'Wakil', 'Sekretaris', 'Bendahara', 'Acara', 'PDD'];
-                        foreach ($jabatanOptions as $jabatan) {
-                            $selected = ($userData['jabatan'] === $jabatan) ? 'selected' : '';
-                            echo "<option value='$jabatan' $selected>$jabatan</option>";
+                    <label class="block font-bold mt-2">Jabatan</label>
+                    <select id="jabatan" name="jabatan" class="w-full p-4 rounded-lg bg-blue-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+                        <?php
+                        // Tampilkan opsi jabatan berdasarkan role
+                        if ($userData['role'] === 'anggota') {
+                            echo '<option value="Anggota" selected>Anggota</option>';
+                        } else {
+                            // Daftar jabatan untuk BPH (Admin)
+                            $jabatanOptions = ['Ketua', 'Wakil', 'Sekretaris', 'Bendahara', 'Acara', 'PDD'];
+                            foreach ($jabatanOptions as $jabatan) {
+                                $selected = ($userData['jabatan'] === $jabatan) ? 'selected' : '';
+                                echo "<option value='$jabatan' $selected>$jabatan</option>";
+                            }
                         }
-                    }
-                    ?>
-                </select>
+                        ?>
+                    </select>
             </div>
         </div>
         
@@ -358,7 +377,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         <!-- Cancel and Save buttons (visible by default) - Now with id="submitButton" -->
         <div id="submitButton" class="mt-4">
-            <button id="cancelButton" class=" text-white py-2 px-4 rounded-md mr-2" style="background-color: #727DB6;">Cancel</button>
+            <button id="cancelButton" class=" text-white py-2 px-4 rounded-md mr-2" style="background-color: #727DB6;">Discard</button>
             <button id="saveButton" class=" text-white py-2 px-4 rounded-md" style="background-color: #727DB6;">Save</button>
         </div>
     </div>
@@ -388,7 +407,9 @@ $(document).ready(function() {
             const jabatanOptions = ['Ketua', 'Wakil', 'Sekretaris', 'Bendahara', 'Acara', 'PDD'];
             let options = '';
             jabatanOptions.forEach(jabatan => {
-                options += `<option value="${jabatan}">${jabatan}</option>`;
+                // Cek apakah jabatan ini adalah jabatan yang sudah dipilih sebelumnya
+                const selected = jabatan === "<?php echo $userData['jabatan']; ?>" ? 'selected' : '';
+                options += `<option value="${jabatan}" ${selected}>${jabatan}</option>`;
             });
             jabatanSelect.html(options);
         }
