@@ -1,6 +1,34 @@
 <?php
 // Proses Pendaftaran
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validasi reCAPTCHA
+    $recaptcha_secret = '6LdqifoqAAAAAJUdiGG4oypswb-11ZTdYT7NB3uR'; // Ganti dengan Secret Key Anda
+    $recaptcha_response = $_POST['g-recaptcha-response'];
+
+    $url = 'https://www.google.com/recaptcha/api/siteverify';
+    $data = [
+        'secret' => $recaptcha_secret,
+        'response' => $recaptcha_response,
+        'remoteip' => $_SERVER['REMOTE_ADDR']
+    ];
+
+    $options = [
+        'http' => [
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method' => 'POST',
+            'content' => http_build_query($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result);
+
+    if (!$response->success) {
+        echo json_encode(['status' => 'error', 'message' => 'CAPTCHA verification failed.']);
+        exit();
+    }
+
     // Koneksi ke SQLite
     $db = new SQLite3('../db/ukm.db');
 
