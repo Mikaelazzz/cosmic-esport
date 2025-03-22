@@ -1,144 +1,153 @@
 <?php
 session_start();
 
-date_default_timezone_set('Asia/Jakarta'); // Atur zona waktu
+date_default_timezone_set('Asia/Jakarta');
 
-// Cek apakah pengguna sudah login
-if (!isset($_SESSION['user'])) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit();
+// Fungsi untuk logging
+function logDebug($message) {
+    error_log(date('Y-m-d H:i:s') . " - DEBUG: " . $message);
 }
 
-// Ambil data pengguna dari session
-$user = $_SESSION['user'];
-if ($user['role'] !== 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Forbidden']);
-    exit();
-}
+// Fungsi untuk validasi QR code
+function validateQRCode($qrData, $currentTime) {
+    $qrParts = explode(':', $qrData);
+    logDebug("QR Parts: " . print_r($qrParts, true));
 
-// Koneksi ke database SQLite3
-$db = new SQLite3('../db/ukm.db');
-if (!$db) {
-    echo json_encode(['success' => false, 'message' => 'Gagal terhubung ke database']);
-    exit();
-}
-
-// Ambil data dari AJAX
-$data = json_decode(file_get_contents('php://input'), true);
-if (!$data) {
-    echo json_encode(['success' => false, 'message' => 'Invalid data']);
-    exit();
-}
-
-// Debugging: Catat data ke log server
-error_log('Data diterima: ' . print_r($data, true));
-
-// Validasi data
-if (!isset($data['qr_data']) || !isset($data['nim']) || !isset($data['status'])) {
-    echo json_encode(['success' => false, 'message' => 'Data tidak lengkap']);
-    exit();
-}
-
-// Parsing qr_data
-$qrData = $data['qr_data'];
-$qrParts = explode(':', $qrData); // Pisahkan string berdasarkan ":"
-
-if (count($qrParts) !== 3) {
-    echo json_encode(['success' => false, 'message' => 'Format QR code tidak valid']);
-    exit();
-}
-
-$pertemuanId = $qrParts[1]; // Ambil bagian kedua (pertemuan_id)
-$timestamp = $qrParts[2]; // Ambil bagian ketiga (timestamp)
-
-// Ambil nilai `hari` dari tabel `jadwal_pertemuan` berdasarkan `pertemuan_id`
-$queryHari = "SELECT hari FROM jadwal_pertemuan WHERE id = :pertemuan_id";
-$stmtHari = $db->prepare($queryHari);
-$stmtHari->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
-$resultHari = $stmtHari->execute();
-$hari = $resultHari->fetchArray(SQLITE3_ASSOC);
-
-if (!$hari) {
-    echo json_encode(['success' => false, 'message' => 'Pertemuan tidak ditemukan']);
-    exit();
-}
-
-$hari = $hari['hari']; // Ambil nilai hari dari hasil query
-$waktu_sekarang = date('Y-m-d H:i:s'); // Waktu sekarang dari PHP
-
-// Simpan atau update status kehadiran
-$queryCek = "SELECT * FROM absen WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
-$stmtCek = $db->prepare($queryCek);
-$stmtCek->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
-$stmtCek->bindValue(':nim', $data['nim'], SQLITE3_TEXT);
-$resultCek = $stmtCek->execute();
-$dataCek = $resultCek->fetchArray(SQLITE3_ASSOC);
-
-if ($dataCek) {
-    // Update status jika data sudah ada
-    $queryUpdate = "UPDATE absen SET status = :status, hari = :hari, jam = :jam WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
-    $stmtUpdate = $db->prepare($queryUpdate);
-    $stmtUpdate->bindValue(':status', $data['status'], SQLITE3_TEXT);
-    $stmtUpdate->bindValue(':hari', $hari, SQLITE3_TEXT);
-    $stmtUpdate->bindValue(':jam', $waktu_sekarang, SQLITE3_TEXT);
-    $stmtUpdate->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
-    $stmtUpdate->bindValue(':nim', $data['nim'], SQLITE3_TEXT);
-    $resultUpdate = $stmtUpdate->execute();
-
-    if (!$resultUpdate) {
-        echo json_encode(['success' => false, 'message' => 'Gagal update data: ' . $db->lastErrorMsg()]);
-        exit();
+    if (count($qrParts) !== 3) {
+        throw new Exception("Format QR code tidak valid");
     }
-} else {
-    // Insert data baru jika belum ada
-    $queryInsert = "INSERT INTO absen (pertemuan_id, nim, status, hari, jam) VALUES (:pertemuan_id, :nim, :status, :hari, :jam)";
+
+    $prefix = $qrParts[0];
+    $pertemuanId = $qrParts[1];
+    $qrTimestamp = (int)$qrParts[2];
+
+    logDebug("Current Time: " . $currentTime);
+    logDebug("QR Timestamp: " . $qrTimestamp);
+    logDebug("Time Difference: " . ($currentTime - $qrTimestamp) . "ms");
+
+    // Validasi timestamp (5 detik)
+    if (($currentTime - $qrTimestamp) > 5000) {
+        throw new Exception("QR Code telah kadaluarsa");
+    }
+
+    return [
+        'prefix' => $prefix,
+        'pertemuan_id' => $pertemuanId,
+        'timestamp' => $qrTimestamp
+    ];
+}
+
+$isTransactionActive = false; // Set flag ke false setelah commit
+try {
+    // Koneksi database
+    $db = new SQLite3('../db/ukm.db');
+    if (!$db) {
+        throw new Exception("Gagal terhubung ke database");
+    }
+
+    // Parse input data
+    $rawData = file_get_contents('php://input');
+    logDebug("Raw data received: " . $rawData);
+    
+    $data = json_decode($rawData, true);
+    if (!$data) {
+        throw new Exception("Invalid JSON data");
+    }
+
+    // Validasi input
+    if (!isset($data['qr_data']) || !isset($data['nim']) || !isset($data['status'])) {
+        throw new Exception("Data tidak lengkap");
+    }
+
+    // Validasi QR code
+    $currentTime = round(microtime(true) * 1000);
+    $qrInfo = validateQRCode($data['qr_data'], $currentTime);
+    $pertemuanId = $qrInfo['pertemuan_id'];
+
+    // Flag untuk menandai apakah transaksi sedang berlangsung
+    $isTransactionActive = false;
+
+    // Mulai transaction
+    $db->exec('BEGIN');
+    $isTransactionActive = true; // Set flag ke true
+
+    // Cek status pertemuan
+    $queryPertemuan = "SELECT status, hari FROM jadwal_pertemuan WHERE id = :id";
+    $stmtPertemuan = $db->prepare($queryPertemuan);
+    if (!$stmtPertemuan) {
+        throw new Exception("Database error: " . $db->lastErrorMsg());
+    }
+
+    $stmtPertemuan->bindValue(':id', $pertemuanId, SQLITE3_INTEGER);
+    $resultPertemuan = $stmtPertemuan->execute();
+    $pertemuan = $resultPertemuan->fetchArray(SQLITE3_ASSOC);
+
+    if (!$pertemuan) {
+        throw new Exception("Pertemuan tidak ditemukan");
+    }
+
+    if ($pertemuan['status'] !== 'berlangsung') {
+        throw new Exception("Sesi pertemuan tidak aktif");
+    }
+
+    // Cek duplikasi absensi
+    $queryCek = "SELECT id FROM absen WHERE pertemuan_id = :pertemuan_id AND nim = :nim";
+    $stmtCek = $db->prepare($queryCek);
+    $stmtCek->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
+    $stmtCek->bindValue(':nim', $data['nim'], SQLITE3_TEXT);
+    
+    $resultCek = $stmtCek->execute();
+    if ($resultCek->fetchArray(SQLITE3_ASSOC)) {
+        throw new Exception("Anda sudah melakukan absensi");
+    }
+
+    // Insert absensi
+    $waktu_sekarang = date('Y-m-d H:i:s');
+    $queryInsert = "INSERT INTO absen (pertemuan_id, nim, status, qr_code, hari, jam) 
+                    VALUES (:pertemuan_id, :nim, :status, :qr_code, :hari, :jam)";
+    
     $stmtInsert = $db->prepare($queryInsert);
+    if (!$stmtInsert) {
+        throw new Exception("Gagal mempersiapkan query: " . $db->lastErrorMsg());
+    }
+
     $stmtInsert->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
     $stmtInsert->bindValue(':nim', $data['nim'], SQLITE3_TEXT);
     $stmtInsert->bindValue(':status', $data['status'], SQLITE3_TEXT);
-    $stmtInsert->bindValue(':hari', $hari, SQLITE3_TEXT);
+    $stmtInsert->bindValue(':qr_code', $data['qr_data'], SQLITE3_TEXT);
+    $stmtInsert->bindValue(':hari', $pertemuan['hari'], SQLITE3_TEXT);
     $stmtInsert->bindValue(':jam', $waktu_sekarang, SQLITE3_TEXT);
-    $resultInsert = $stmtInsert->execute();
 
-    if (!$resultInsert) {
-        echo json_encode(['success' => false, 'message' => 'Gagal insert data: ' . $db->lastErrorMsg()]);
-        exit();
+    if (!$stmtInsert->execute()) {
+        throw new Exception("Gagal menyimpan data: " . $db->lastErrorMsg());
     }
+
+    // Commit transaction
+    $db->exec('COMMIT');
+    $isTransactionActive = false; // Set flag ke false setelah commit
+    logDebug("Absensi berhasil dicatat");
+
+    // Response sukses
+    echo json_encode([
+        'success' => true,
+        'message' => 'Absensi berhasil dicatat',
+        'nim' => $data['nim'],
+        'waktu' => $waktu_sekarang,
+        'status' => 'success'
+    ]);
+
+} catch (Exception $e) {
+    logDebug("Error: " . $e->getMessage());
+    
+    // Rollback hanya jika transaksi sedang aktif
+    if (isset($db) && $isTransactionActive) {
+        $db->exec('ROLLBACK');
+    }
+    
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage(),
+        'status' => 'invalid'
+    ]);
 }
-
-// Hitung ulang statistik kehadiran
-$queryStatistik = "
-    SELECT 
-        COUNT(*) AS total_anggota,
-        SUM(CASE WHEN status = 'Hadir' THEN 1 ELSE 0 END) AS hadir,
-        SUM(CASE WHEN status = 'Alpha' THEN 1 ELSE 0 END) AS alpha
-    FROM 
-        absen
-    WHERE 
-        pertemuan_id = :pertemuan_id
-";
-$stmtStatistik = $db->prepare($queryStatistik);
-$stmtStatistik->bindValue(':pertemuan_id', $pertemuanId, SQLITE3_INTEGER);
-$resultStatistik = $stmtStatistik->execute();
-$statistik = $resultStatistik->fetchArray(SQLITE3_ASSOC);
-
-if (!$statistik) {
-    echo json_encode(['success' => false, 'message' => 'Gagal mengambil statistik']);
-    exit();
-}
-
-$total_anggota = $statistik['total_anggota'];
-$hadir = $statistik['hadir'];
-$alpha = $statistik['alpha'];
-$persentase_hadir = $total_anggota > 0 ? round(($hadir / $total_anggota) * 100, 2) : 0;
-$persentase_alpha = $total_anggota > 0 ? round(($alpha / $total_anggota) * 100, 2) : 0;
-
-// Kirim respons ke client
-echo json_encode([
-    'success' => true,
-    'hadir' => $hadir,
-    'persentase_hadir' => $persentase_hadir,
-    'persentase_alpha' => $persentase_alpha,
-    'nim' => $data['nim'] // Sertakan NIM dalam respons
-]);
 ?>
