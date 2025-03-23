@@ -7,6 +7,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 if ($user['role'] !== 'admin') {
@@ -92,7 +109,8 @@ $statusSesi = $resultStatus->fetchArray(SQLITE3_ASSOC)['status'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Pertemuan - Cosmic Esport</title>
+    <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -118,7 +136,7 @@ $statusSesi = $resultStatus->fetchArray(SQLITE3_ASSOC)['status'];
     <main class="flex-1 overflow-y-auto p-6">
         <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
             <!-- Judul Pertemuan -->
-            <h2 class="text-2xl font-bold mb-4">Pertemuan Rutin - <?php echo htmlspecialchars($pertemuan['id'] . ' ' . $pertemuan['nama_topik'] . ''); ?></h2>
+            <h2 class="text-2xl font-bold mb-4"><?php echo htmlspecialchars($pertemuan['nama_topik']); ?></h2>
 
             <!-- Informasi Acara -->
             <div class="mb-6">
