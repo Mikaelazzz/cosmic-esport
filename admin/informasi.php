@@ -8,6 +8,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 if ($user['role'] !== 'admin') {
@@ -33,6 +50,7 @@ $resultRiwayat = $db->query($queryRiwayat);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -131,7 +149,7 @@ $resultRiwayat = $db->query($queryRiwayat);
                         <h2 class="text-gray-700 text-xl">List Informasi</h2>
                                 <!-- Search Input -->
                     <div class="relative">
-                        <input type="text" id="searchInput" placeholder="Search User" class="border border-gray-300 rounded-md pl-4 pr-10 py-2">
+                        <input type="text" id="searchInput" placeholder="Search Informasi" class="border border-gray-300 rounded-md pl-4 pr-10 py-2">
                         <i id="searchIcon" class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"></i>
                     </div> 
                     </div>  
