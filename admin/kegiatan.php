@@ -8,6 +8,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 if ($user['role'] !== 'admin') {
@@ -51,10 +68,10 @@ $resultRiwayat = $stmtRiwayat->execute();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/*" href="../src/logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -139,7 +156,7 @@ $resultRiwayat = $stmtRiwayat->execute();
             <main class="flex-1 overflow-y-auto h-[calc(100vh-5rem)]">
                 <section class="p-4">
                 <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-gray-700 text-xl">Manage Kegiatan</h2>
+                        <h2 class="text-gray-700 text-base md:text-xl">Manage Kegiatan</h2>
                         <button onclick="showAddUserForm()" class="bg-[#727DB6] hover:bg-[#5c6491] text-white px-4 py-2 rounded-md flex items-center">
                             <i class="fas fa-plus mr-2"></i> Add Kegiatan
                         </button>
@@ -148,10 +165,10 @@ $resultRiwayat = $stmtRiwayat->execute();
 
                 <section class="p-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-gray-700 text-xl">List Kegiatan</h2>
+                    <h2 class="text-gray-700 text-base md:text-xl">List Kegiatan</h2>
                             <!-- Search Input -->
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Search User" class="border border-gray-300 rounded-md pl-4 pr-10 py-2">
+                    <input type="text" id="searchInput" placeholder="Search Kegiatan" class="w-[200px] md:w-full border border-gray-300 rounded-md pl-4 pr-10 py-2">
                     <i id="searchIcon" class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"></i>
                 </div> 
                 </div>  
@@ -161,7 +178,7 @@ $resultRiwayat = $stmtRiwayat->execute();
     <a href="../admin/detail_kegiatan.php?id=<?php echo htmlspecialchars($row['id']); ?>">
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
             <!-- Gambar Kegiatan -->
-            <div class="bg-gray-200 h-[237px] w-full flex items-center justify-center overflow-hidden">
+            <div class="bg-gray-200 h-[720] w-[1280] flex items-center justify-center overflow-hidden">
                 <?php if (!empty($row['gambar'])): ?>
                     <img 
                         src="<?php echo htmlspecialchars($row['gambar']); ?>" 
@@ -183,7 +200,7 @@ $resultRiwayat = $stmtRiwayat->execute();
                 </section>
 
                 <section class="p-4">
-                    <h2 class="text-gray-700 text-xl">Riwayat Kegiatan</h2>
+                    <h2 class="text-gray-700 text-base md:text-xl">Riwayat Kegiatan</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
                         <?php while ($row = $resultRiwayat->fetchArray(SQLITE3_ASSOC)): ?>
                             <a href="../admin/detail_kegiatan.php?id=<?php echo htmlspecialchars($row['id']); ?>">
