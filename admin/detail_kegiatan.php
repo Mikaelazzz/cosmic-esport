@@ -85,13 +85,13 @@ if (!$kegiatan) {
             <input type="hidden" name="id" value="<?php echo htmlspecialchars($kegiatan['id']); ?>">
 
             <!-- Gambar Kegiatan -->
-            <div class="bg-gray-200 h-64 rounded-lg mb-6 overflow-hidden">
+            <div class="bg-gray-200 w-[1280] h-[720] rounded-lg mb-6 overflow-hidden">
                 <?php if (!empty($kegiatan['gambar'])): ?>
                     <img 
                         id="gambarPreview"
                         src="<?php echo htmlspecialchars($kegiatan['gambar']); ?>" 
                         alt="<?php echo htmlspecialchars($kegiatan['nama_kegiatan']); ?>" 
-                        class="w-full h-full object-cover"
+                        class="w-[1280] h-[720] object-cover"
                     >
                 <?php else: ?>
                     <span id="gambarPreview" class="text-gray-600">No Image</span>
