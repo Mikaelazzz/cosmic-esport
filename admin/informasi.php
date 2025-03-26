@@ -158,12 +158,12 @@ $resultRiwayat = $db->query($queryRiwayat);
                             <?php while ($row = $resultAktif->fetchArray(SQLITE3_ASSOC)): ?>
                                 <div class="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer" onclick="window.open('<?php echo htmlspecialchars($row['link']); ?>', '_blank')">
                                     <!-- Gambar Informasi -->
-                                    <div class="bg-gray-200 h-[237px] w-full flex items-center justify-center overflow-hidden">
+                                    <div class="bg-gray-200 h-[720] w-[1280] flex items-center justify-center overflow-hidden">
                                         <?php if (!empty($row['gambar'])): ?>
                                             <img 
                                                 src="<?php echo htmlspecialchars($row['gambar']); ?>" 
                                                 alt="<?php echo htmlspecialchars($row['nama_informasi']); ?>" 
-                                                class="w-full h-full object-cover"
+                                                class="w-[1280] h-[720] object-cover"
                                             >
                                         <?php else: ?>
                                             <span class="text-gray-600">No Image</span>
@@ -191,12 +191,12 @@ $resultRiwayat = $db->query($queryRiwayat);
                             <div class="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer" onclick="window.open('<?php echo htmlspecialchars($row['link']); ?>', '_blank')">
                                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                                     <!-- Gambar Informasi -->
-                                    <div class="bg-gray-200 h-[237px] w-full flex items-center justify-center overflow-hidden">
+                                    <div class="bg-gray-200 h-[720] w-[1280] flex items-center justify-center overflow-hidden">
                                         <?php if (!empty($row['gambar'])): ?>
                                             <img 
                                                 src="<?php echo htmlspecialchars($row['gambar']); ?>" 
                                                 alt="<?php echo htmlspecialchars($row['nama_informasi']); ?>" 
-                                                class="w-full h-full object-cover"
+                                                class="w-[1280] h-[720] object-cover"
                                             >
                                         <?php else: ?>
                                             <span class="text-gray-600">No Image</span>
