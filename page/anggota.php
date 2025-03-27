@@ -8,6 +8,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 
@@ -68,6 +85,7 @@ $result->reset(); // Reset pointer hasil query untuk digunakan kembali
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -182,10 +200,10 @@ $result->reset(); // Reset pointer hasil query untuk digunakan kembali
                                 <div class="bg-white rounded-lg shadow-md p-4 flex items-center justify-between">
                                     <div class="flex items-center space-x-4">
                                         <div class="w-[100px] h-[100px] bg-gray-200 rounded-full overflow-hidden">
-                                            <img src="<?php echo !empty($row['profile_image']) ? htmlspecialchars($row['profile_image']) : '../src/default.png'; ?>" alt="Profile Image" class="w-[100px] h-[100px] rounded-full object-cover">
+                                            <img src="<?php echo !empty($row['profile_image']) ? htmlspecialchars($row['profile_image']) : '../src/default.png'; ?>" alt="Profile Image" class="w-[100px] h-[100px] rounded-full object-cover select-none pointer-events-none">
                                         </div>
                                         <div class="max-w-[150px] sm:max-w-[400px] break-words">
-                                            <h3 class="font-semibold text-base w-24 md:w-48 md:text-lg break-words"><?php echo htmlspecialchars($row['nama_lengkap']); ?></h3>
+                                            <h3 class="font-semibold text-base w-24 md:w-48 xl:w-72 md:text-lg break-words"><?php echo htmlspecialchars($row['nama_lengkap']); ?></h3>
                                             <p class="text-gray-600"><?php echo htmlspecialchars($row['nim']); ?></p>
                                         </div>
                                     </div>
