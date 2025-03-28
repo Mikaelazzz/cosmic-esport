@@ -8,6 +8,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 
@@ -40,6 +57,7 @@ if (!$resultCarousel) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -212,8 +230,8 @@ if (!$resultCarousel) {
                 <div class="carousel-inner">
                 <?php while ($rowCarousel = $resultCarousel->fetchArray(SQLITE3_ASSOC)): ?>
                 <div class="carousel-item w-full max-w-[300px] sm:max-w-[500px] lg:max-w-[700px]">
-                    <a class="w-full h-auto object-cover" href="<?php echo htmlspecialchars($rowCarousel['link']); ?>" target="_blank">
-                        <img src="<?php echo htmlspecialchars($rowCarousel['gambar']); ?>" alt="Event Image" class="w-full h-auto object-cover">
+                    <a class="w-[1280] h-[720] object-cover" href="<?php echo htmlspecialchars($rowCarousel['link']); ?>" target="_blank">
+                        <img src="<?php echo htmlspecialchars($rowCarousel['gambar']); ?>" alt="Event Image" class="w-[1280] h-[720] object-cover select-none pointer-events-none">
                     </a>
                 </div>
                 <?php endwhile; ?>
@@ -504,13 +522,7 @@ function scanQRCode() {
 // Fungsi untuk menangani hasil scan QR code
 function handleScanResult(resultText) {
     console.log("Menangani hasil scan:", resultText);
-    Swal.fire({
-        title: 'Berhasil!',
-        text: `QR Code berhasil dipindai: ${resultText}`,
-        icon: 'success',
-        confirmButtonText: 'OK'
-    });
-
+    
     // Kirim data kehadiran ke server
     fetch('../api/absensi.php', {
         method: 'POST',
@@ -528,7 +540,14 @@ function handleScanResult(resultText) {
         if (data.success) {
             Swal.fire('Berhasil!', 'Kehadiran berhasil dicatat.', 'success');
         } else {
-            Swal.fire('Error', 'Gagal menyimpan data kehadiran.', 'error');
+            // Tampilkan pesan kesalahan berdasarkan respons dari server
+            if (data.message === "Anda sudah melakukan absensi") {
+                Swal.fire('Error', 'Anda sudah melakukan presensi.', 'error');
+            } else if (data.message === "QR Code telah kadaluarsa") {
+                Swal.fire('Error', 'Kode QR Anda telah kadaluarsa, silahkan coba lagi.', 'error');
+            } else {
+                Swal.fire('Error', 'Gagal menyimpan data kehadiran.', 'error');
+            }
         }
     })
     .catch(error => {
