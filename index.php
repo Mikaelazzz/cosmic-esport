@@ -241,7 +241,7 @@
               <h1 class="font-bold text-2xl md:text-3xl pb-2">
                 WELCOME TO&nbsp;<span class="typewriter"></span>
               </h1>
-                <div class="pb-12 text-center font-medium text-lg w-[430px] md:w-[760px]">
+                <div class="pb-12 mx-2 text-center font-medium text-lg w-auto md:w-[760px]">
                   Cosmic Esport salah satu Organisasi Mahasiswa yang bertujuan untuk membangun dan mengembangkan bakat serta potensi para anggota dibidang Esport
                 </div>
               </div>
@@ -296,13 +296,13 @@
              <div class="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="700">
                <img src="../src/5.png" alt="" class="rounded-lg w-full h-100 object-cover">
                <div class="pt-4">
-                 <span class="font-bold text-xl">ACARA</span>
+                 <span class="font-bold text-xl">HUMAS</span>
                </div>
              </div>
              <div class="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="900">
                <img src="../src/6.png" alt="" class="rounded-lg w-full h-100 object-cover">
                <div class="pt-4">
-                 <span class="font-bold text-xl">ACARA</span>
+                 <span class="font-bold text-xl">HUMAS</span>
                </div>
              </div>
              <div class="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="1100">
@@ -368,16 +368,18 @@
               <div class="infinite-scroll-item">
                 <img src="../src/coh.JPG" alt="Image 1" class="w-56 h-56 object-cover">
                 <img src="../src/WCSL.jpg" alt="Image 2" class="w-56 h-56 object-cover">
-                <img src="../src/Welpart2.jpg" alt="Image 3" class="w-56 h-56 object-cover">
-                <img src="../src/csl1.jpg" alt="Image 4" class="w-56 h-56 object-cover">
-                <img src="../src/csl2.jpg" alt="Image 5" class="w-56 h-56 object-cover">
+                <img src="../src/WCSL2.jpg" alt="Image 3" class="w-56 h-56 object-cover">
+                <img src="../src/Welpart2.jpg" alt="Image 4" class="w-56 h-56 object-cover">
+                <img src="../src/csl1.jpg" alt="Image 5" class="w-56 h-56 object-cover">
+                <img src="../src/csl2.jpg" alt="Image 6" class="w-56 h-56 object-cover">
               </div>
               <div class="infinite-scroll-item" aria-hidden="true">
                 <img src="../src/coh.JPG" alt="Image 1" class="w-56 h-56 object-cover">
                 <img src="../src/WCSL.jpg" alt="Image 2" class="w-56 h-56 object-cover">
-                <img src="../src/Welpart2.jpg" alt="Image 3" class="w-56 h-56 object-cover">
-                <img src="../src/csl1.jpg" alt="Image 4" class="w-56 h-56 object-cover">
-                <img src="../src/csl2.jpg" alt="Image 5" class="w-56 h-56 object-cover">
+                <img src="../src/WCSL2.jpg" alt="Image 3" class="w-56 h-56 object-cover">
+                <img src="../src/Welpart2.jpg" alt="Image 4" class="w-56 h-56 object-cover">
+                <img src="../src/csl1.jpg" alt="Image 5" class="w-56 h-56 object-cover">
+                <img src="../src/csl2.jpg" alt="Image 6" class="w-56 h-56 object-cover">
               </div>
             </div>
           </div>
@@ -388,16 +390,18 @@
               <div class="infinite-scroll-item">
                 <img src="../src/coh.JPG" alt="Image 1" class="w-56 h-56 object-cover">
                 <img src="../src/WCSL.jpg" alt="Image 2" class="w-56 h-56 object-cover">
-                <img src="../src/Welpart2.jpg" alt="Image 3" class="w-56 h-56 object-cover">
-                <img src="../src/csl1.jpg" alt="Image 4" class="w-56 h-56 object-cover">
-                <img src="../src/csl2.jpg" alt="Image 5" class="w-56 h-56 object-cover">
+                <img src="../src/WCSL2.jpg" alt="Image 3" class="w-56 h-56 object-cover">
+                <img src="../src/Welpart2.jpg" alt="Image 4" class="w-56 h-56 object-cover">
+                <img src="../src/csl1.jpg" alt="Image 5" class="w-56 h-56 object-cover">
+                <img src="../src/csl2.jpg" alt="Image 6" class="w-56 h-56 object-cover">
               </div>
               <div class="infinite-scroll-item" aria-hidden="true">
                 <img src="../src/coh.JPG" alt="Image 1" class="w-56 h-56 object-cover">
                 <img src="../src/WCSL.jpg" alt="Image 2" class="w-56 h-56 object-cover">
-                <img src="../src/Welpart2.jpg" alt="Image 3" class="w-56 h-56 object-cover">
-                <img src="../src/csl1.jpg" alt="Image 4" class="w-56 h-56 object-cover">
-                <img src="../src/csl2.jpg" alt="Image 5" class="w-56 h-56 object-cover">
+                <img src="../src/WCSL2.jpg" alt="Image 3" class="w-56 h-56 object-cover">
+                <img src="../src/Welpart2.jpg" alt="Image 4" class="w-56 h-56 object-cover">
+                <img src="../src/csl1.jpg" alt="Image 5" class="w-56 h-56 object-cover">
+                <img src="../src/csl2.jpg" alt="Image 6" class="w-56 h-56 object-cover">
               </div>
             </div>
           </div>
@@ -447,7 +451,7 @@
     const carouselInner = document.querySelector('.carousel-inner');
     const carousel = document.querySelector('.carousel');
 
-         // Fungsi untuk mendeteksi bot
+    // Fungsi untuk mendeteksi bot
     function isBot() {
       const userAgent = navigator.userAgent.toLowerCase();
       const bots = ['bot', 'spider', 'crawler', 'curl', 'wget', 'python', 'java', 'php', 'ruby', 'perl', 'go-http', 'node-fetch'];
