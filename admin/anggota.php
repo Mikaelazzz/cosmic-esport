@@ -35,12 +35,23 @@ if ($user['role'] !== 'admin') {
 // Koneksi ke database SQLite3
 $db = new SQLite3('../db/ukm.db');
 
-// Query untuk mengambil data dari tabel users dan absen
+// anggota.php (bagian atas file)
+$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
+
+// Query untuk menghitung total data
+$totalQuery = "SELECT COUNT(*) as total FROM users";
+$totalResult = $db->query($totalQuery);
+$totalUsers = $totalResult->fetchArray(SQLITE3_ASSOC)['total'];
+
+// Query untuk mengambil data dengan pagination
 $query = "
     SELECT u.id, u.nim, u.nama_lengkap, u.email, u.jabatan, u.profile_image, COUNT(a.nim) AS total_absen
     FROM users u
     LEFT JOIN absen a ON u.nim = a.nim
     GROUP BY u.id
+    LIMIT $limit OFFSET $offset
 ";
 $result = $db->query($query);
 
@@ -320,21 +331,33 @@ $no = 1;
                             <?php $no++; endwhile; ?>
                         </div>
                         
+
+                        
                         <div class="flex flex-col md:flex-row justify-between items-center mt-4 text-sm">
-                            <div class="text-gray-700 mb-2 md:mb-0">
-                                <span class="mr-2">Rows per page:</span>
-                                <select class="border border-gray-300 rounded-md p-1">
-                                    <option>10</option>
-                                    <option>20</option>
-                                    <option>30</option>
-                                </select>
-                            </div>
-                            <div class="text-gray-700 flex items-center">
-                                <span>1-10 of 50 items</span>
-                                <button class="ml-2 p-1"><i class="fas fa-chevron-left"></i></button>
-                                <button class="ml-2 p-1"><i class="fas fa-chevron-right"></i></button>
-                            </div>
-                        </div>
+    <div class="text-gray-700 mb-2 md:mb-0">
+        <span class="mr-2">Rows per page:</span>
+        <select id="rowsPerPage" class="border border-gray-300 rounded-md p-1" onchange="changeRowsPerPage()">
+            <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10</option>
+            <option value="20" <?php echo $limit == 20 ? 'selected' : ''; ?>>20</option>
+            <option value="30" <?php echo $limit == 30 ? 'selected' : ''; ?>>30</option>
+        </select>
+    </div>
+    <div class="text-gray-700 flex items-center">
+        <span id="paginationInfo">
+            <?php 
+            $start = ($page - 1) * $limit + 1;
+            $end = min($page * $limit, $totalUsers);
+            echo "$start-$end of $totalUsers items";
+            ?>
+        </span>
+        <button id="prevPage" class="ml-2 p-1" onclick="changePage(-1)" <?php echo $page == 1 ? 'disabled' : ''; ?>>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button id="nextPage" class="ml-2 p-1" onclick="changePage(1)" <?php echo $end >= $totalUsers ? 'disabled' : ''; ?>>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
                     </div>
                 </section>
             </main>
@@ -347,6 +370,220 @@ $no = 1;
         const modeButton = document.getElementById('modeButton');
         const modeMenu = document.getElementById('modeMenu');
         const modeIcon = document.getElementById('modeIcon');
+        // Variabel global untuk pagination
+        let currentPage = 1;
+        let rowsPerPage = 10;
+        let totalUsers = <?php echo $totalUsers; ?>;
+        let filteredUsers = totalUsers;
+        let filterBPHValue = false;
+        let filterAnggotaValue = false;
+        let searchValue = "";
+        
+
+        // Fungsi untuk memuat data dengan AJAX
+function loadData(page = currentPage, limit = rowsPerPage, search = '', filterBPH = false, filterAnggota = false) {
+    const url = new URL(window.location);
+    url.searchParams.set('page', page);
+    url.searchParams.set('limit', limit);
+    
+    // Tambahkan parameter search dan filter jika ada
+    if (search) url.searchParams.set('search', search);
+    if (filterBPH) url.searchParams.set('filterBPH', 'true');
+    if (filterAnggota) url.searchParams.set('filterAnggota', 'true');
+    
+    fetch(url.toString())
+        .then(response => response.text())
+        .then(html => {
+            // Parsing HTML response untuk mendapatkan data baru
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Update tabel desktop
+            const newDesktopTable = doc.querySelector('.desktop-view-table');
+            if (newDesktopTable) {
+                document.querySelector('.desktop-view-table').innerHTML = newDesktopTable.innerHTML;
+            }
+            
+            // Update cards mobile
+            const newMobileCards = doc.querySelector('.mobile-view-card');
+            if (newMobileCards) {
+                document.querySelector('.mobile-view-card').innerHTML = newMobileCards.innerHTML;
+            }
+            
+            // Update pagination info
+            const newPaginationInfo = doc.getElementById('paginationInfo');
+            if (newPaginationInfo) {
+                document.getElementById('paginationInfo').textContent = newPaginationInfo.textContent;
+            }
+            
+            // Update tombol pagination
+            const newPrevButton = doc.getElementById('prevPage');
+            const newNextButton = doc.getElementById('nextPage');
+            if (newPrevButton && newNextButton) {
+                document.getElementById('prevPage').disabled = newPrevButton.disabled;
+                document.getElementById('nextPage').disabled = newNextButton.disabled;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+        // Fungsi untuk mengupdate tampilan pagination
+        function updatePagination() {
+            const start = (currentPage - 1) * rowsPerPage + 1;
+            const end = Math.min(currentPage * rowsPerPage, filteredUsers);
+            
+            document.getElementById('paginationInfo').textContent = `${start}-${end} of ${filteredUsers} items`;
+            
+            // Disable tombol previous jika di halaman pertama
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            
+            // Disable tombol next jika di halaman terakhir
+            document.getElementById('nextPage').disabled = end >= filteredUsers;
+            
+            // Update tampilan tabel/kartu berdasarkan halaman saat ini
+            updateVisibleRows();
+        }
+
+        // Fungsi untuk mengubah jumlah baris per halaman
+        function changeRowsPerPage() {
+            rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+            currentPage = 1; // Reset ke halaman pertama
+            
+            // Update URL tanpa reload
+            updateURLWithPagination();
+            
+            // Muat data dengan AJAX
+            loadData(currentPage, rowsPerPage, searchValue, filterBPHValue, filterAnggotaValue);
+        }
+
+        // Fungsi untuk mengganti halaman
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            
+            // Update URL tanpa reload
+            const url = new URL(window.location);
+            url.searchParams.set('page', newPage);
+            window.history.pushState({}, '', url);
+            
+            // Muat data dengan AJAX
+            loadData(newPage, rowsPerPage, searchValue, filterBPHValue, filterAnggotaValue);
+            
+            currentPage = newPage;
+        }
+
+        // Fungsi untuk memperbarui URL dengan parameter pagination
+        function updateURLWithPagination() {
+            const url = new URL(window.location);
+            url.searchParams.set('page', currentPage);
+            url.searchParams.set('limit', rowsPerPage);
+            window.history.pushState({}, '', url);
+        }
+
+        // Event listener untuk tombol back/forward browser
+        window.addEventListener('popstate', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const newPage = urlParams.has('page') ? parseInt(urlParams.get('page')) : 1;
+            const newLimit = urlParams.has('limit') ? parseInt(urlParams.get('limit')) : 10;
+            
+            if (newPage !== currentPage || newLimit !== rowsPerPage) {
+                currentPage = newPage;
+                rowsPerPage = newLimit;
+                document.getElementById('rowsPerPage').value = rowsPerPage.toString();
+                loadData(currentPage, rowsPerPage, searchValue, filterBPHValue, filterAnggotaValue);
+            }
+        });
+
+        // Fungsi untuk membaca parameter pagination dari URL
+function readPaginationFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Read page and limit from URL if they exist
+    if (urlParams.has('page')) {
+        currentPage = parseInt(urlParams.get('page'));
+    }
+    
+    if (urlParams.has('limit')) {
+        rowsPerPage = parseInt(urlParams.get('limit'));
+    }
+}
+
+        function updateVisibleRows() {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    
+    // Reset counters
+    let visibleCount = 0;
+    let displayedCount = 0;
+    
+    // Desktop: Update table
+    const desktopRows = document.querySelectorAll('.desktop-view-table tbody tr');
+    desktopRows.forEach(row => {
+        // First determine if row should be visible based on filters
+        if (row.dataset.filtered !== 'hidden') {
+            // This is a row that passes the filter
+            visibleCount++;
+            
+            // Now determine if it should be shown on current page
+            if (visibleCount > startIndex && visibleCount <= endIndex) {
+                row.style.display = '';
+                displayedCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Mobile: Update cards with same logic
+    visibleCount = 0;
+    const mobileCards = document.querySelectorAll('.mobile-view-card > div');
+    mobileCards.forEach(card => {
+        if (card.dataset.filtered !== 'hidden') {
+            visibleCount++;
+            
+            if (visibleCount > startIndex && visibleCount <= endIndex) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+        // Panggil saat pertama kali load
+        
+        document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    currentPage = urlParams.has('page') ? parseInt(urlParams.get('page')) : 1;
+    rowsPerPage = urlParams.has('limit') ? parseInt(urlParams.get('limit')) : 10;
+    searchValue = urlParams.get('search') || '';
+    filterBPHValue = urlParams.get('filterBPH') === 'true';
+    filterAnggotaValue = urlParams.get('filterAnggota') === 'true';
+    
+    // Set nilai awal dropdown
+    document.getElementById('rowsPerPage').value = rowsPerPage.toString();
+    
+    // Set nilai filter checkbox jika ada di URL
+    if (filterBPHValue) {
+        document.getElementById('filterBPH').checked = true;
+        document.getElementById('filterBPHDesktop').checked = true;
+    }
+    if (filterAnggotaValue) {
+        document.getElementById('filterAnggota').checked = true;
+        document.getElementById('filterAnggotaDesktop').checked = true;
+    }
+    
+    // Set nilai search input jika ada di URL
+    if (searchValue) {
+        document.getElementById('searchInput').value = searchValue;
+        document.getElementById('searchInputMobile').value = searchValue;
+    }
+    
+    // Update tampilan awal
+    updatePagination();
+});
 
         // Sidebar
         menuButton.addEventListener('click', () => {
@@ -385,25 +622,43 @@ $no = 1;
             }
         });
 
-        // Function to filter table based on jabatan and search input
         function filterTable() {
-            // Get all filter values
-            const filterBPH = document.getElementById('filterBPH').checked || document.getElementById('filterBPHDesktop').checked;
-            const filterAnggota = document.getElementById('filterAnggota').checked || document.getElementById('filterAnggotaDesktop').checked;
-            const searchText = (document.getElementById('searchInput').value || document.getElementById('searchInputMobile').value).toLowerCase();
-            
-            // Filter desktop table rows
-            const desktopRows = document.querySelectorAll('.desktop-view-table tbody tr');
-            desktopRows.forEach(row => {
-                filterRow(row, filterBPH, filterAnggota, searchText);
-            });
-            
-            // Filter mobile cards
-            const mobileCards = document.querySelectorAll('.mobile-view-card > div');
-            mobileCards.forEach(card => {
-                filterRow(card, filterBPH, filterAnggota, searchText);
-            });
+    // Get all filter values
+    const filterBPH = document.getElementById('filterBPH').checked || document.getElementById('filterBPHDesktop').checked;
+    const filterAnggota = document.getElementById('filterAnggota').checked || document.getElementById('filterAnggotaDesktop').checked;
+    const searchText = (document.getElementById('searchInput').value || document.getElementById('searchInputMobile').value).toLowerCase();
+    
+    // Filter desktop table rows
+    const desktopRows = document.querySelectorAll('.desktop-view-table tbody tr');
+    let visibleCount = 0;
+    
+    desktopRows.forEach(row => {
+        if (filterRow(row, filterBPH, filterAnggota, searchText)) {
+            visibleCount++;
+            row.dataset.filtered = 'visible';
+        } else {
+            row.dataset.filtered = 'hidden';
         }
+    });
+    
+    // Filter mobile cards
+    const mobileCards = document.querySelectorAll('.mobile-view-card > div');
+    mobileCards.forEach(card => {
+        if (filterRow(card, filterBPH, filterAnggota, searchText)) {
+            card.dataset.filtered = 'visible';
+        } else {
+            card.dataset.filtered = 'hidden';
+        }
+    });
+
+    // Update filteredUsers count and reset to page 1
+    filteredUsers = visibleCount;
+    currentPage = 1;
+    
+    // Call updatePagination after filtering is done
+    updatePagination();
+    
+}
 
         function filterRow(row, filterBPH, filterAnggota, searchText) {
             const jabatan = row.getAttribute('data-jabatan').toLowerCase();
@@ -413,22 +668,23 @@ $no = 1;
                 jabatan === 'ketua' ||
                 jabatan === 'wakil' ||
                 jabatan === 'bendahara' ||
-                jabatan === 'sekretaris'||
+                jabatan === 'sekretaris' ||
                 jabatan === 'acara' ||
                 jabatan === 'pdd';
 
             const matchesJabatan = 
-                (filterBPH && isBPH) || // Jika BPH dipilih, tampilkan Ketua, Wakil, Bendahara, Sekretaris
-                (filterAnggota && jabatan === 'anggota') || // Jika Anggota dipilih, tampilkan Anggota
-                (!filterBPH && !filterAnggota); // Tampilkan semua jika tidak ada filter yang dipilih
+                (filterBPH && isBPH) || 
+                (filterAnggota && jabatan === 'anggota') || 
+                (!filterBPH && !filterAnggota); // Show all if no filter selected
 
             // Check if row matches the search text
             const rowText = row.textContent.toLowerCase();
             const matchesSearch = rowText.includes(searchText);
 
-            // Show row only if it matches both filter and search criteria
-            row.style.display = (matchesJabatan && matchesSearch) ? '' : 'none';
+            // Return true if row matches both filter and search criteria
+            return (matchesJabatan && matchesSearch);
         }
+
 
         // Sync desktop and mobile filter checkboxes
         document.getElementById('filterBPH').addEventListener('change', function() {
