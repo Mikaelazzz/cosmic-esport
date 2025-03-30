@@ -8,6 +8,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 
@@ -63,6 +80,7 @@ $result->reset(); // Reset pointer hasil query untuk digunakan kembali
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -169,7 +187,7 @@ $result->reset(); // Reset pointer hasil query untuk digunakan kembali
 
         <!-- Bagian h1 Kegiatan UKM -->
         <div class="max-w-7xl mt-4 mb-2">
-            <h1 class="text-2xl font-bold">Kegiatan UKM</h1>
+            <h2 class="text-gray-700 text-base md:text-xl font-bold">Kegiatan UKM</h2>
         </div>
 
         <!-- Grid of Activity Cards -->
@@ -179,12 +197,12 @@ $result->reset(); // Reset pointer hasil query untuk digunakan kembali
                     <a href="../page/detail_kegiatan.php?id=<?php echo htmlspecialchars($row['id']); ?>">
                         <div class="bg-white rounded-lg shadow-md overflow-hidden">
                             <!-- Gambar Kegiatan -->
-                            <div class="bg-gray-200 h-[237px] w-full flex items-center justify-center overflow-hidden">
+                            <div class="bg-gray-200 h-[720] w-[1280] flex items-center justify-center overflow-hidden">
                                 <?php if (!empty($row['gambar'])): ?>
                                     <img 
                                         src="<?php echo htmlspecialchars($row['gambar']); ?>" 
                                         alt="<?php echo htmlspecialchars($row['nama_kegiatan']); ?>" 
-                                        class="w-full h-full object-cover"
+                                        class="w-[1280] h-[720] object-cover"
                                     >
                                 <?php else: ?>
                                     <span class="text-gray-600">No Image</span>
