@@ -8,6 +8,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Get user data from session
 $user = $_SESSION['user'];
 
@@ -147,7 +164,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Form</title>
+    <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -363,7 +381,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         <!-- Cancel and Save buttons (visible by default) - Now with id="submitButton" -->
         <div id="submitButton" class="mt-4">
-            <button id="cancelButton" class=" text-white py-2 px-4 rounded-md mr-2" style="background-color: #727DB6;">Cancel</button>
+            <button id="cancelButton" class=" text-white py-2 px-4 rounded-md mr-2" style="background-color: #727DB6;">Discard</button>
             <button id="saveButton" class=" text-white py-2 px-4 rounded-md" style="background-color: #727DB6;">Save</button>
         </div>
     </div>
