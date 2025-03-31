@@ -13,7 +13,8 @@ if (!isset($_SESSION['reset_nim'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password</title>
+    <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -50,8 +51,8 @@ if (!isset($_SESSION['reset_nim'])) {
         <!-- Left -->
         <div class="flex flex-col justify-center items-center w-full md:w-1/2 custom-bg-left p-8 text-slate-200">
             <img src="../src/logo.png" alt="Colorful logo with overlapping shapes" class="w-72 h-72 mb-3">
-            <h1 class="text-3xl font-bold mb-4">Selamat Datang!</h1>
-            <p class="text-lg mb-6 text-justify">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+            <!-- <h1 class="text-3xl font-bold mb-4">Selamat Datang!</h1>
+            <p class="text-lg mb-6 text-justify">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p> -->
             <button onclick="window.history.back()" class="border-2 border-white rounded px-3 py-1 hover:bg-white hover:text-[#727DB6] transition duration-300">Kembali</button>
         </div>
 
