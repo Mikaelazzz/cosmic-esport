@@ -8,6 +8,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 
@@ -21,11 +38,14 @@ $db = new SQLite3('../db/ukm.db');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <section class="flex h-screen" style="font-family: 'Poppins';">
@@ -169,20 +189,42 @@ $db = new SQLite3('../db/ukm.db');
             }
 
             async function check() {
-                name.innerHTML = 'Getting information...';
-                try {
-                    const request = await fetch(`https://api.isan.eu.org/nickname/${game.value}?id=${encodeURIComponent(id.value)}&server=${encodeURIComponent(zone.value)}`);
-                    const result = await request.json();
-                    if (request.status === 200) {
-                        name.innerHTML = result.name;
-                    } else {
-                        name.innerHTML = 'Nickname not found';
-                    }
-                } catch (error) {
-                    name.innerHTML = 'An error occurred: ' + error.message;
-                }
-                name.classList.remove('hidden'); // Ensure the result is visible
-            }
+    // Tampilkan SweetAlert2 loading
+    Swal.fire({
+        title: 'Loading...',
+        text: 'Sedang mencari data, harap tunggu...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    name.innerHTML = 'Getting information...';
+    try {
+        const request = await fetch(`https://api.isan.eu.org/nickname/${game.value}?id=${encodeURIComponent(id.value)}&server=${encodeURIComponent(zone.value)}`);
+        const result = await request.json();
+        if (request.status === 200) {
+            // Tunda tampilan hasil selama 3 detik
+            setTimeout(() => {
+                name.innerHTML = result.name;
+                name.classList.remove('hidden'); // Tampilkan hasil
+                Swal.close(); // Tutup SweetAlert2 loading
+            }, 3000); // 3000 milidetik = 3 detik
+        } else {
+            setTimeout(() => {
+                name.innerHTML = 'Nickname not found';
+                name.classList.remove('hidden'); // Tampilkan hasil
+                Swal.close(); // Tutup SweetAlert2 loading
+            }, 3000);
+        }
+    } catch (error) {
+        setTimeout(() => {
+            name.innerHTML = 'An error occurred: ' + error.message;
+            name.classList.remove('hidden'); // Tampilkan hasil
+            Swal.close(); // Tutup SweetAlert2 loading
+        }, 3000);
+    }
+}
 
             // Initialize on page load
             document.addEventListener('DOMContentLoaded', () => {
