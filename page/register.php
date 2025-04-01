@@ -3,13 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Esport</title>
+    <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
     <section class="flex flex-col-reverse md:flex-row min-h-screen bg-blue-50" style="font-family: 'Poppins';">
@@ -41,7 +43,10 @@
                     <i class="fas fa-eye-slash"></i>
                 </span>
             </div>
-            
+            <!-- reCAPTCHA -->
+            <div class="mb-6">
+                <div class="g-recaptcha" data-sitekey="6LdqifoqAAAAAMOfFXjs59QjYVUucyJItRjziOIy"></div>
+            </div>
             <!-- Tombol Daftar -->
             <div class="text-center">
                 <button type="submit" class="text-white py-2 px-6 rounded-lg" style="background-color: #727DB6;">Daftar</button>
@@ -51,9 +56,12 @@
 
         <!-- Bagian Selamat Datang -->
         <div class="flex-1 flex flex-col justify-center items-center h-auto text-white p-8 md:p-16 overflow-auto" style="background-color: #727DB6;">
-            <img src="../src/logo.png" alt="Logo" class="mb-8 w-72 h-72">
-            <h2 class="text-2xl font-bold mb-4">Selamat Datang!</h2>
-            <p class="text-justify mb-8">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s...</p>
+        <a href="/index.php" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition duration-300">
+            <i class="fas fa-times text-2xl"></i>
+        </a>    
+        <img src="../src/logo.png" alt="Logo" class="mb-8 w-72 h-72">
+            <!-- <h2 class="text-2xl font-bold mb-4">Selamat Datang!</h2>
+            <p class="text-justify mb-8">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s...</p> -->
             <button class="border-2 border-white rounded px-3 py-1 hover:bg-white hover:text-[#727DB6] transition duration-300"><a href="login.php">LOGIN</a></button>
         </div>
     </section>
@@ -110,6 +118,16 @@
         const nim = $('#nim').val();
         const email = $('#email').val();
         const password = $('#password').val();
+        const recaptchaResponse = grecaptcha.getResponse();
+
+        if (!recaptchaResponse) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal Mendaftar',
+            text: 'Harap verifikasi bahwa Anda bukan robot.',
+        });
+        return;
+    }
 
 
         // Validasi NIM hanya angka
@@ -153,7 +171,8 @@
                 nama_lengkap: nama_lengkap,
                 nim: nim,
                 email: email,
-                password: password
+                password: password,
+                'g-recaptcha-response': recaptchaResponse
             },
             success: function(response) {
                 const data = JSON.parse(response);
