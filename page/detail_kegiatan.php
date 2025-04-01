@@ -8,6 +8,23 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+// Set waktu aktivitas terakhir jika belum ada
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+}
+
+// Cek jika waktu tidak aktif melebihi 1 jam (3600 detik)
+if (time() - $_SESSION['last_activity'] > 3600) {
+    // Hapus session dan redirect ke halaman login
+    session_unset();
+    session_destroy();
+    header("Location: ../page/login.php");
+    exit();
+}
+
+// Perbarui waktu aktivitas terakhir
+$_SESSION['last_activity'] = time();
+
 // Ambil data pengguna dari session
 $user = $_SESSION['user'];
 
@@ -41,6 +58,7 @@ if (!$kegiatan) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Esport</title>
+    <link rel="icon" type="image/*" href="../src/logo.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -64,12 +82,12 @@ if (!$kegiatan) {
         <main class="flex-1 overflow-y-auto p-6">
             <section class="max-w-2xl mx-auto p-6">
                 <!-- Gambar Kegiatan -->
-                <div class="bg-gray-200 h-64 rounded-lg mb-6 overflow-hidden">
+                <div class="bg-gray-200 w-[1280] h-[720] rounded-lg mb-6 overflow-hidden">
                     <?php if (!empty($kegiatan['gambar'])): ?>
                         <img 
                             src="<?php echo htmlspecialchars($kegiatan['gambar']); ?>" 
                             alt="<?php echo htmlspecialchars($kegiatan['nama_kegiatan']); ?>" 
-                            class="w-full h-full object-cover"
+                            class="w-[1280] h-[720] object-cover"
                         >
                     <?php else: ?>
                         <span class="text-gray-600">No Image</span>
@@ -83,12 +101,12 @@ if (!$kegiatan) {
                     
                     <h3 class="text-lg font-medium">Deskripsi</h3>
                     <p class="text-gray-700 text-justify">
-                        <?php echo htmlspecialchars($kegiatan['deskripsi']); ?>
+                        <?php echo nl2br(htmlspecialchars($kegiatan['deskripsi'])); ?>
                     </p>
-    
+
                     <h3 class="text-lg font-medium">Syarat dan Ketentuan</h3>
                     <p class="text-gray-700 text-justify">
-                        <?php echo htmlspecialchars($kegiatan['syarat_dan_ketentuan']); ?>
+                        <?php echo nl2br(htmlspecialchars($kegiatan['syarat_dan_ketentuan'])); ?>
                     </p>
                 </div>
     
