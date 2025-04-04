@@ -32,7 +32,9 @@ $user = $_SESSION['user'];
 $db = new SQLite3('../db/ukm.db');
 
 // Query untuk mengambil data anggota
-$limit = 10; // Jumlah data per halaman
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+// Make sure limit is one of the allowed values
+
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
@@ -58,9 +60,10 @@ $query = "
     GROUP BY 
         users.id 
     ORDER BY 
-        users.nama_lengkap ASC 
+        users.id ASC 
     LIMIT $limit OFFSET $offset
 ";
+
 
 // Query untuk menghitung total data dengan filter pencarian
 $totalQuery = "SELECT COUNT(*) as total FROM users";
@@ -70,6 +73,12 @@ if (!empty($search)) {
 $totalResult = $db->query($totalQuery);
 $totalRow = $totalResult->fetchArray(SQLITE3_ASSOC);
 $totalData = $totalRow['total'];
+$totalPages = ceil($totalData / $limit);
+
+// Calculate the range information
+$startItem = ($page - 1) * $limit + 1;
+$endItem = min($page * $limit, $totalData);
+$rangeInfo = "$startItem-$endItem users of $totalData users";
 
 // Eksekusi query utama
 $result = $db->query($query);
@@ -224,22 +233,61 @@ $result->reset(); // Reset pointer hasil query untuk digunakan kembali
                     </div>
 
                     <!-- Pagination -->
-                    <?php if ($totalData > $limit): ?>
-                        <div class="flex justify-center mt-6 space-x-4">
-                            <?php if ($page > 1): ?>
-                                <a href="?page=<?php echo $page - 1; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="px-6 py-2 bg-[#727DB6] text-white rounded-md hover:bg-[#5c6491] transition">
-                                    Sebelumnya
-                                </a>
-                            <?php endif; ?>
-                            <?php if ($page < $totalPages): ?>
-                                <a href="?page=<?php echo $page + 1; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="px-6 py-2 bg-[#727DB6] text-white rounded-md hover:bg-[#5c6491] transition">
-                                    Selanjutnya
-                                </a>
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
+                    <?php if ($totalData > 0): ?>
+    <div class="flex flex-col md:flex-row justify-between items-center mt-6 gap-4 bg-white p-4 rounded-lg shadow">
+        <!-- Items per page selector - Left -->
+        <div class="flex items-center space-x-2">
+            <span class="text-gray-700">Show:</span>
+            <select onchange="changeItemsPerPage(this)" 
+                    class="px-3 py-1 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#727DB6]">
+                <?php foreach ([10, 20, 30] as $option): ?>
+                    <option value="<?= $option ?>" <?= $limit == $option ? 'selected' : '' ?>>
+                        <?= $option ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <span class="text-gray-700">entries</span>
+        </div>
+        
+        <!-- Page navigation - Center -->
+        <div class="flex items-center space-x-2 my-2 md:my-0">
+            <?php if ($page > 1): ?>
+                <a href="?page=<?= $page - 1 ?>&limit=<?= $limit ?><?= !empty($search) ? '&search='.urlencode($search) : '' ?>" 
+                   class="px-4 py-2 bg-[#727DB6] text-white rounded-md hover:bg-[#5c6491] transition flex items-center">
+                    <i class="fas fa-chevron-left mr-1"></i> Prev
+                </a>
+            <?php endif; ?>
+            
+            <div class="px-4 py-2 bg-gray-100 rounded-md text-center">
+                Page <?= $page ?> of <?= $totalPages ?>
+            </div>
+            
+            <?php if ($page < $totalPages): ?>
+                <a href="?page=<?= $page + 1 ?>&limit=<?= $limit ?><?= !empty($search) ? '&search='.urlencode($search) : '' ?>" 
+                   class="px-4 py-2 bg-[#727DB6] text-white rounded-md hover:bg-[#5c6491] transition flex items-center">
+                    Next <i class="fas fa-chevron-right ml-1"></i>
+                </a>
+            <?php endif; ?>
+        </div>
+        
+        <!-- Data range info - Right -->
+        <div class="text-gray-700 text-sm md:text-base">
+            Showing <?= $startItem ?> to <?= $endItem ?> of <?= $totalData ?> entries
+        </div>
+    </div>
                 </section>
             </main>
+
+    <script>
+        function changeItemsPerPage(select) {
+        const limit = select.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('limit', limit);
+        url.searchParams.set('page', 1); // Reset to first page when changing limit
+        window.location.href = url.toString();
+    }
+    </script>
+    <?php endif; ?>
 
     <script>
         const sidebar = document.getElementById('sidebar');
@@ -290,6 +338,7 @@ $result->reset(); // Reset pointer hasil query untuk digunakan kembali
         });
 
     </script>
+    
 </body>
 </html>
 
