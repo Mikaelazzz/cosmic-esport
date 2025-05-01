@@ -754,83 +754,105 @@ $(document).ready(function() {
     });
 
     $('#submitPassword').click(function() {
-        const new_password = $('#new_password').val();
-        const confirm_password = $('#confirm_password').val();
+    const new_password = $('#new_password').val();
+    const confirm_password = $('#confirm_password').val();
+    const userId = "<?php echo $userId; ?>";
 
-        if (!new_password || !confirm_password) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Kedua kolom password harus diisi.',
-                confirmButtonColor: '#727DB6',
-            });
-            return;
-        }
-        if (new_password !== confirm_password) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Password tidak cocok.',
-                confirmButtonColor: '#727DB6',
-            });
-            return;
-        }
+    // Validasi client-side
+    if (!new_password || !confirm_password) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Both password fields are required',
+            confirmButtonColor: '#727DB6'
+        });
+        return;
+    }
 
-        // Validasi tambahan (huruf kapital dan angka)
-        const hasCapital = /[A-Z]/.test(new_password);
-        const hasNumber = /\d/.test(new_password);
-        if (!hasCapital || !hasNumber) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Password harus mengandung minimal 1 huruf kapital dan 1 angka.',
-                confirmButtonColor: '#727DB6',
-            });
-            return;
-        }
+    if (new_password !== confirm_password) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error', 
+            text: 'Passwords do not match',
+            confirmButtonColor: '#727DB6'
+        });
+        return;
+    }
 
-        $.ajax({
-            url: 'profil_user.php',
-            method: 'POST',
-            data: {
-                new_password: new_password,
-                confirm_password: confirm_password
-            },
-            dataType: 'json',
-            success: function(data) {
-                if (data.status === 'success') {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        text: 'Password berhasil diganti!',
-                        confirmButtonColor: '#727DB6',
-                    }).then(() => {
-                        $('#new_password').val(''); // Clear fields
-                        $('#confirm_password').val('');
-                        $('#passwordFields').addClass('hidden');
-                        $('#passwordButtons').addClass('hidden');
-                        $('#togglePasswordChange').text('Change Password');
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: data.message,
-                        confirmButtonColor: '#727DB6',
-                    });
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error:', error);
+    // Tampilkan loading
+    Swal.fire({
+        title: 'Processing...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Kirim request
+    $.ajax({
+        url: '../api/update_password.php',
+        type: 'POST',
+        contentType: 'application/json',
+        dataType: 'json',
+        data: JSON.stringify({
+            user_id: userId,
+            new_password: new_password
+        }),
+        success: function(response) {
+            Swal.close();
+            if (response.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: response.message,
+                    confirmButtonColor: '#727DB6'
+                }).then(() => {
+                    // Reset form
+                    $('#new_password, #confirm_password').val('');
+                    $('#passwordFields, #passwordButtons').addClass('hidden');
+                    $('#togglePasswordChange').text('Change Password');
+                });
+            } else {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Terjadi kesalahan saat mengganti password.',
-                    confirmButtonColor: '#727DB6',
+                    text: response.message,
+                    confirmButtonColor: '#727DB6'
                 });
             }
-        });
+        },
+        error: function(xhr) {
+            Swal.close();
+            let errorMsg = 'An error occurred';
+            
+            try {
+                // Coba parse error response
+                const response = JSON.parse(xhr.responseText);
+                errorMsg = response.message || errorMsg;
+                
+                // Jika session expired
+                if (xhr.status === 401) {
+                    window.location.href = '../page/login.php';
+                    return;
+                }
+            } catch (e) {
+                // Jika response bukan JSON
+                if (xhr.responseText.includes('login.php')) {
+                    window.location.href = '../page/login.php';
+                    return;
+                }
+                errorMsg = 'Server returned an invalid response';
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Error (' + xhr.status + ')',
+                text: errorMsg,
+                confirmButtonColor: '#727DB6'
+            });
+        }
     });
+});
 
     // Toggle password visibility
     $('#toggleNewPassword').click(function() {
