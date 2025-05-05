@@ -174,15 +174,72 @@
                 password: password,
                 'g-recaptcha-response': recaptchaResponse
             },
+            // In the success callback of the AJAX call in register.php
             success: function(response) {
                 const data = JSON.parse(response);
                 if (data.status === 'success') {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Berhasil!',
-                        text: data.message,
-                    }).then(() => {
-                        window.location.href = '../page/login.php'; // Redirect ke halaman login
+                        title: 'Pendaftaran Berhasil!',
+                        html: `
+                            <div class="mt-4 p-3 bg-gray-100 rounded-lg">
+                                <p class="font-bold mb-2">Token Reset Password Anda:</p>
+                                <p id="tokenDisplay" class="text-lg font-mono bg-white p-2 rounded">${data.token}</p>
+                            </div>
+                            <p class="mt-2 text-sm text-red-500">Simpan token ini di tempat yang aman!</p>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Salin Token',
+                        cancelButtonText: 'Download Token',
+                        showDenyButton: true,
+                        denyButtonText: 'Ke Halaman Login',
+                        confirmButtonColor: '#727DB6',
+                        cancelButtonColor: '#6c757d',
+                        denyButtonColor: '#28a745',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        const redirectToLogin = () => {
+                            window.location.href = '../page/login.php';
+                        };
+                        
+                        if (result.isConfirmed) {
+                            navigator.clipboard.writeText(data.token).then(() => {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Token Disalin!',
+                                    text: 'Token telah disalin ke clipboard.',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(redirectToLogin);
+                            }).catch(() => {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal Menyalin',
+                                    text: 'Gagal menyalin token ke clipboard.',
+                                }).then(redirectToLogin);
+                            });
+                        } else if (result.isDenied) {
+                            redirectToLogin();
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            const blob = new Blob([`Token Reset Password Cosmic Esport\n\nNIM: ${nim}\nToken: ${data.token}\n\nSimpan token ini untuk kebutuhan reset password.`], 
+                                { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `token_reset_password_${nim}.txt`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Token Didownload!',
+                                text: 'File token telah didownload.',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(redirectToLogin);
+                        }
                     });
                 } else {
                     Swal.fire({
