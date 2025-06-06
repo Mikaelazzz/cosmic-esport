@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- Dropdown Filter -->
+    <div
+      class="rounded border border-accent-2 bg-[#2d2e32] text-white relative w-[11.5rem] max-w-full"
+      data-kira-dropdown="Jabatan"
+    >
+      <!-- Dropdown Content -->
+      <div
+        class="absolute inset-x-0 top-full z-[100] -m-px rounded shadow-sm bg-[#2d2e32] text-white mt-1 pb-2.5"
+        data-kira-dropdown="Jabatan"
+        style="display: none"
+      >
+        <div class="text-sm overflow-auto" style="height: auto">
+          <!-- BPH Option -->
+          <div
+            class="flex items-center gap-2 flex-nowrap text-start cursor-pointer hover:bg-accent-4 px-2.5"
+          >
+            <input
+              type="checkbox"
+              id="filterBPH"
+              class="form-checkbox"
+              value="BPH"
+            />
+            <label
+              for="filterBPH"
+              class="py-1.5 w-full text-xs font-medium font-montserrat cursor-pointer"
+              >BPH</label
+            >
+          </div>
+          <!-- Anggota Option -->
+          <div
+            class="flex items-center gap-2 flex-nowrap text-start cursor-pointer hover:bg-accent-4 px-2.5"
+          >
+            <input
+              type="checkbox"
+              id="filterAnggota"
+              class="form-checkbox"
+              value="Anggota"
+            />
+            <label
+              for="filterAnggota"
+              class="py-1.5 w-full text-xs font-medium font-montserrat cursor-pointer"
+              >Anggota</label
+            >
+          </div>
+        </div>
+      </div>
+      <!-- Dropdown Toggle -->
+      <button
+        id="filterButton"
+        class="flex items-stretch justify-between flex-nowrap cursor-pointer w-full h-full ps-8 py-2 text-[13px] font-montserrat text-start bg-[#2d2e32] text-white"
+      >
+        <i
+          class="fas fa-filter text-lg w-max h-max absolute left-2 top-1/2 transform -translate-y-1/2"
+        ></i>
+        <span class="block w-full h-full ps-8">Filter</span>
+        <svg
+          class="ml-2 w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2"
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          ></path>
+        </svg>
+      </button>
+    </div>
+
+    <script>
+      // Toggle dropdown filter
+      const dropdownToggle = document.getElementById("filterButton");
+      const dropdownContent = document.querySelector(
+        '[data-kira-dropdown="Jabatan"] .absolute'
+      );
+
+      dropdownToggle.addEventListener("click", (e) => {
+        e.stopPropagation(); // Mencegah event bubbling
+        dropdownContent.style.display =
+          dropdownContent.style.display === "none" ? "block" : "none";
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener("click", (event) => {
+        if (
+          !dropdownToggle.contains(event.target) &&
+          !dropdownContent.contains(event.target)
+        ) {
+          dropdownContent.style.display = "none";
+        }
+      });
+
+      // Function to filter table based on jabatan
+      function filterTable() {
+        const filterBPH = document.getElementById("filterBPH").checked;
+        const filterAnggota = document.getElementById("filterAnggota").checked;
+        const rows = document.querySelectorAll("tbody tr");
+
+        rows.forEach((row) => {
+          const jabatan = row.getAttribute("data-jabatan").toLowerCase(); // Ambil jabatan dari atribut data-jabatan
+
+          // Check if row matches the selected jabatan filter
+          const matchesJabatan =
+            (filterBPH && jabatan === "bph") ||
+            (filterAnggota && jabatan === "anggota") ||
+            (!filterBPH && !filterAnggota); // Show all if no filter selected
+
+          row.style.display = matchesJabatan ? "" : "none";
+        });
+      }
+
+      // Event listeners for filter checkboxes
+      document
+        .getElementById("filterBPH")
+        .addEventListener("change", filterTable);
+      document
+        .getElementById("filterAnggota")
+        .addEventListener("change", filterTable);
+    </script>
+  </body>
+</html>
